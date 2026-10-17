@@ -1,0 +1,672 @@
+:root {
+  --cream: #fbf5dd;
+  --sage: #e7e1b1;
+  --green: #306d29;
+  --deep-green: #0d530e;
+
+  --white: #fffdf6;
+  --text: #253c22;
+  --muted: #78816d;
+  --border: #ded9b8;
+
+  --heading-font: "Playfair Display", serif;
+  --body-font: "DM Sans", sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* BANNER 1 */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  padding: 20px 8%;
+  background: #fbf5dd;
+  border-bottom: 1px solid rgba(222, 217, 184, 0.6);
+  backdrop-filter: blur(12px);
+}
+
+/* CHỈNH LOGO LA MUSE - FASHION FOR YOUR STORY */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #253c22;
+
+  font-size: larger;
+  font-weight: 70px;
+}
+
+.brand-tagline {
+  display: block;
+  font-size: 11px;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+.brand-icon {
+  color: var(--green);
+  font-size: 26px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.button a {
+  color: var(--muted);
+  font-size: 12px;
+  transition: color 0.3s;
+}
+
+.button a:hover,
+.button a.active {
+  color: var(--deep-green);
+}
+
+.button a.active {
+  font-weight: 700;
+}
+
+.button .button-login {
+  padding: 10px 18px;
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  color: var(--deep-green);
+}
+
+.button .button-login:hover {
+  background: var(--deep-green);
+  color: var(--cream);
+}
+
+/* HERO */
+
+.hero {
+  position: relative;
+  min-height: 590px;
+  padding: 120px 25px 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  background: #fbf5dd;
+}
+
+/* FASHION FOR YOUR STORY */
+.eyebrow {
+  color: #253c22;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+/* SỰ TINH TẾ */
+.hero h1 {
+  margin-top: 28px;
+  color: var(--deep-green);
+  font-family: var(--heading-font);
+  font-size: clamp(38px, 5.5vw, 66px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* CÓ TRONG TỪNG KHOẢNH KHẮC */
+.hero h1 em,
+.story h2 em,
+.philosophy h2 em,
+.closing h2 em {
+  color: #577e56;
+  font-weight: 400;
+}
+
+/* La Muse không chỉ là một thương hiệu thời trang, mà còn là người bạn
+          đồng hành giúp bạn tự tin, tỏa sáng và là chính mình. */
+.hero-description {
+  max-width: 540px;
+  margin-top: 25px;
+  color: #577e56;
+  font-size: 20px;
+  line-height: 2;
+
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.hero-button {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 35px;
+  padding: 14px 24px;
+  background: var(--deep-green);
+  border: 1px solid var(--deep-green);
+  border-radius: 4px;
+  color: var(--cream);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  transition: all 0.3s;
+}
+
+.hero-button:hover {
+  background: var(--green);
+  transform: translateY(-3px);
+}
+
+.hero-decoration {
+  position: absolute;
+  right: 7%;
+  bottom: 35px;
+  color: #9b9b70;
+  font-family: var(--heading-font);
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 3px;
+}
+
+/* ICON LẤP LÁNH */
+
+.icon {
+  position: absolute;
+  color: #253c22;
+  animation: twinkle 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.icon-one {
+  top: 20%;
+  left: 15%;
+  font-size: 27px;
+}
+
+.icon-two {
+  top: 36%;
+  right: 18%;
+  font-size: 35px;
+  animation-delay: 0.8s;
+}
+
+.icon-three {
+  bottom: 22%;
+  left: 23%;
+  font-size: 19px;
+  animation-delay: 1.4s;
+}
+
+.icon-four {
+  bottom: 28%;
+  right: 13%;
+  font-size: 25px;
+  animation-delay: 0.5s;
+}
+
+/* BANNER HÌNH ẢNH */
+
+.image-banner {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+  overflow: hidden;
+}
+
+/* Hình ảnh bên trong */
+.image-banner img {
+  display: block;
+  width: 100%;
+  height: 900px;
+  object-fit: cover;
+  margin: 0;
+  padding: 0;
+}
+
+/* BANNER 2 */
+
+.section {
+  padding: 100px 10%;
+  background: #253c22;
+}
+/* CÂU CHUYỆN CỦA CHÚNG TÔI */
+.story-heading p {
+  color: #e7e1b1;
+  font-size: 15px;
+}
+
+.story-label {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 55px;
+}
+
+/* FOR YOUR STORY */
+.story-label p {
+  color: #e7e1b1;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+/* STORY */
+
+.story-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.story-label h2 {
+  font-size: 60px;
+}
+
+.story h2,
+.philosophy h2,
+.closing h2 {
+  margin-top: 20px;
+
+  font-family: var(--heading-font);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.story-text {
+  padding-top: 30px;
+}
+
+/* Chỉnh chữ Trong nhịp sống hiện đại.. */
+.story-text p {
+  margin-bottom: 15px;
+  color: #fbf5dd;
+  font-size: 18px;
+  line-height: 2.1;
+
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* CHỮ BÍ MẬT CỦA VẺ ĐẸP NẰM Ở SỰ TỰ TIN */
+.story-heading h2 {
+  color: #306d29;
+  font-size: 70px;
+}
+
+/* BANNER 3 */
+
+.philosophy {
+  background: #fbf5dd;
+}
+
+.philosophy-heading {
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.gallery-section {
+  padding: 70px 6%;
+  overflow: hidden;
+}
+
+.gallery-heading {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.gallery-heading h2 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(28px, 4vw, 42px);
+  color: #0d530e;
+}
+
+.gallery-heading p {
+  color: #6b6b5c;
+}
+
+.gallery {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gallery-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gallery-track {
+  display: flex;
+  gap: 20px;
+  transition: transform 0.5s ease;
+}
+
+.gallery-item {
+  flex: 0 0 calc((100% - 40px) / 3);
+  min-width: 0;
+  margin: 0;
+}
+
+.gallery-item img {
+  display: block;
+  width: 100%;
+  height: 600px;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.gallery-item p {
+  text-align: center;
+  color: #0d530e;
+  font-size: 16px;
+  margin-top: 14px;
+}
+
+.gallery-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #306d29;
+  border-radius: 50%;
+  background: #fbf5dd;
+  color: #0d530e;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.gallery-btn:hover {
+  background: #306d29;
+  color: #fff;
+}
+
+.gallery-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.gallery-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #b6ae9f;
+  cursor: pointer;
+}
+
+.gallery-dot.active {
+  width: 24px;
+  border-radius: 8px;
+  background: #306d29;
+}
+
+@media (max-width: 768px) {
+  .gallery-item {
+    flex-basis: calc((100% - 16px) / 2);
+  }
+
+  .gallery-track {
+    gap: 16px;
+  }
+
+  .gallery-item img {
+    height: 240px;
+  }
+
+  .gallery {
+    gap: 8px;
+  }
+
+  .gallery-btn {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-item {
+    flex-basis: 100%;
+  }
+}
+
+/* BANNER 4*/
+
+.quote-section {
+  position: relative;
+  overflow: hidden;
+  padding: 100px 25px;
+
+  background-color: #253c22;
+  text-align: center;
+}
+
+/* Màu chữ Fashion for your story */
+.quote-section .eyebrow {
+  color: #e7e1b1;
+}
+
+.quote-section blockquote {
+  margin-top: 28px;
+  font-family: var(--heading-font);
+  font-size: clamp(27px, 4vw, 43px);
+  font-weight: 400;
+  line-height: 1.6;
+  color: #306d29;
+}
+
+.quote-line {
+  display: block;
+  width: 45px;
+  height: 1px;
+  margin: 30px auto 20px;
+  background: var(--sage);
+}
+
+.quote-caption {
+  color: #e7e1b1;
+  font-size: 15px;
+  letter-spacing: 3px;
+}
+
+/* BANNER 5 */
+
+.closing {
+  text-align: center;
+  background-image: url("../picture/BANNER.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Chữ FASHION FOR YOUR STUDY */
+.eyebrow {
+  color: #253c22;
+}
+
+.closing > p:not(.eyebrow) {
+  margin-top: 20px;
+  color: #253c22;
+  font-size: 13px;
+}
+
+/* FOOTER */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 30px 8%;
+  border-top: 1px solid var(--border);
+  background: var(--cream);
+}
+
+.footer-brand {
+  color: var(--deep-green);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.footer p,
+.footer span {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 800px) {
+  .header {
+    padding: 18px 5%;
+  }
+
+  .brand {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+
+  .navigation {
+    gap: 15px;
+  }
+
+  .navigation a {
+    font-size: 11px;
+  }
+
+  .section {
+    padding: 70px 7%;
+  }
+
+  .story-content {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .story-text {
+    padding-top: 0;
+  }
+
+  .value-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .value-card {
+    padding: 28px;
+  }
+
+  .hero {
+    min-height: 520px;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .navigation {
+    width: 100%;
+    justify-content: center;
+    gap: 17px;
+    flex-wrap: wrap;
+  }
+
+  .navigation .nav-login {
+    padding: 7px 10px;
+  }
+
+  .hero {
+    min-height: 480px;
+    padding: 80px 22px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .hero-description {
+    font-size: 12px;
+  }
+
+  .story h2,
+  .philosophy h2,
+  .closing h2 {
+    font-size: 34px;
+  }
+
+  .quote-section {
+    padding: 75px 20px;
+  }
+
+  .quote-section blockquote {
+    font-size: 27px;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* HIỆU ỨNG CUỘN TRANG */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

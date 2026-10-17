@@ -1,0 +1,452 @@
+:root {
+  --green-dark: #253c22;
+  --green: #496541;
+  --cream: #fbf5dd;
+  --ivory: #fffdf8;
+  --brown: #72513d;
+  --text: #35271f;
+  --muted: #82766b;
+  --line: #e6dfd0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #c3cc9b;
+  color: var(--text);
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* NỘI DUNG CHÍNH */
+
+main {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ĐƯỜNG DẪN */
+
+.breadcrumb {
+  width: 88%;
+  max-width: 1350px;
+  margin: 17px auto 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.breadcrumb a:hover {
+  color: var(--green);
+}
+
+/* BANNER */
+
+.cart-banner {
+  width: 100%;
+  max-width: none;
+  height: 400px;
+  margin: 0;
+
+  background-image:
+    linear-gradient(rgba(24, 39, 20, 0.4), rgba(24, 39, 20, 0.4)),
+    url("../picture/BANNERGIOHANG.jpg");
+
+  background-size: cover;
+  background-position: center 45%;
+  background-repeat: no-repeat;
+}
+
+.banner-content {
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  padding: 20px;
+
+  text-align: center;
+  color: var(--ivory);
+}
+
+.banner-eyebrow {
+  margin-bottom: 12px;
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+
+.banner-content h1 {
+  margin-bottom: 12px;
+  font-size: clamp(50px, 5vw, 58px);
+  line-height: 1.15;
+
+  font-family: "Pacifico", cursive;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.banner-description {
+  font-size: 15px;
+}
+
+/* =========================
+   GIỎ HÀNG TRỐNG
+========================= */
+
+.empty-cart {
+  width: 100%;
+  min-height: 500px;
+  padding: 50px 20px 45px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+/* ICON */
+
+.empty-cart-icon {
+  width: 136px;
+  height: 136px;
+  margin: 0 auto 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #d9dfcf;
+  border-radius: 50%;
+
+  background: #f8f5e7;
+}
+
+.empty-cart-icon svg {
+  width: 70px;
+  height: 70px;
+
+  fill: none;
+  stroke: var(--green-dark);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* TIÊU ĐỀ */
+
+.empty-cart h2 {
+  width: 100%;
+  margin: 0 auto 12px;
+
+  color: var(--green-dark);
+
+  font-family: "Cormorant Garamond", serif;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.3;
+
+  text-align: center;
+}
+
+/* MÔ TẢ */
+
+.empty-description {
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto;
+
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+
+  text-align: center;
+}
+
+/* NÚT TIẾP TỤC MUA SẮM */
+
+.shop-button {
+  width: 260px;
+  min-height: 52px;
+  margin: 30px auto 0;
+  padding: 13px 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+
+  border: 1px solid var(--green-dark);
+  background: var(--green-dark);
+  color: var(--ivory);
+
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.4px;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+.shop-button:hover {
+  background: transparent;
+  color: var(--green-dark);
+}
+
+.button-arrow {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.shop-button:hover .button-arrow {
+  transform: translateX(4px);
+}
+
+/* DÒNG CHỮ CUỐI */
+
+.bottom-note {
+  width: 100%;
+  margin: 25px auto 0;
+
+  color: #a19783;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+
+  text-align: center;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer {
+  width: 100%;
+  min-height: 110px;
+  padding: 22px 6%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+
+  background: var(--cream);
+  border-top: 1px solid var(--line);
+}
+
+.footer-logo {
+  align-items: flex-start;
+  font-size: 32px;
+}
+
+.footer-logo small {
+  font-size: 12px;
+}
+
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.footer-social a {
+  color: var(--green-dark);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.footer-description {
+  padding-left: 25px;
+  border-left: 1px solid #d9cfb9;
+
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 900px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+
+  .navigation {
+    order: 3;
+    width: 100%;
+    gap: 24px;
+  }
+
+  .cart-banner {
+    width: 92%;
+    height: 250px;
+  }
+
+  .breadcrumb {
+    width: 92%;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer-logo {
+    align-items: center;
+  }
+}
+
+/* =========================
+   ĐIỆN THOẠI
+========================= */
+
+@media (max-width: 520px) {
+  .announcement {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .header {
+    padding: 15px 5%;
+    justify-content: space-between;
+    gap: 15px;
+  }
+
+  .logo {
+    font-size: 29px;
+  }
+
+  .header-actions {
+    gap: 13px;
+  }
+
+  .navigation {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+  }
+
+  .navigation a {
+    font-size: 10px;
+  }
+
+  .breadcrumb {
+    margin-top: 15px;
+    font-size: 11px;
+  }
+
+  .cart-banner {
+    width: 92%;
+    height: 220px;
+  }
+
+  .banner-eyebrow {
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+
+  .banner-content h1 {
+    font-size: 35px;
+  }
+
+  .banner-description {
+    font-size: 12px;
+  }
+
+  .empty-cart {
+    min-height: 440px;
+    padding: 40px 20px;
+  }
+
+  .empty-cart-icon {
+    width: 110px;
+    height: 110px;
+    margin-bottom: 22px;
+  }
+
+  .empty-cart-icon svg {
+    width: 58px;
+    height: 58px;
+  }
+
+  .empty-cart h2 {
+    font-size: 29px;
+  }
+
+  .empty-description {
+    font-size: 12px;
+  }
+
+  .shop-button {
+    width: 245px;
+    min-height: 49px;
+  }
+
+  .bottom-note {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 20px;
+    padding: 28px 15px;
+  }
+
+  .footer-logo {
+    align-items: center;
+  }
+
+  .footer-description {
+    padding: 15px 0 0;
+    border-left: none;
+    border-top: 1px solid #d9cfb9;
+  }
+}
+
+/* GIỎ HÀNG */
+.empty-cart-icon {
+  width: 100px;
+  height: 100px;
+  border: 1px solid #d9dfcf;
+  border-radius: 50%;
+  background: #f8f5e7;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-cart-icon svg {
+  display: block;
+  width: 55px;
+  height: 55px;
+
+  fill: none;
+  stroke: #253c22;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
