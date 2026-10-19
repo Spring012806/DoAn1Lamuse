@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 
+// Nếu đã đăng nhập, chuyển đến trang phù hợp.
 if (lm_is_logged_in()) {
     header('Location: ' . lm_redirect_after_login());
     exit;
@@ -10,61 +12,71 @@ if (lm_is_logged_in()) {
 
 $error = '';
 $email = '';
+
 $next = (string) ($_GET['next'] ?? $_POST['next'] ?? 'index.php');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
     $next = (string) ($_POST['next'] ?? 'index.php');
 
+    // Kiểm tra dữ liệu người dùng nhập.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
         $error = 'Vui lòng nhập email hợp lệ và mật khẩu.';
     } else {
         try {
-$stmt = $pdo->prepare(
-    'SELECT id, full_name, email, password_hash, status, role
-     FROM users
-     WHERE email = ?
-     LIMIT 1'
-);
+            // Tìm tài khoản theo email trong bảng users.
+            $stmt = $pdo->prepare(
+                'SELECT id, full_name, email, password_hash, status, role
+                 FROM users
+                 WHERE email = ?
+                 LIMIT 1'
+            );
+
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$user || !password_verify($password, (string) $user['password_hash'])) {
+            // Kiểm tra tài khoản và mật khẩu.
+            if (
+                !$user ||
+                !password_verify($password, (string) $user['password_hash'])
+            ) {
                 $error = 'Email hoặc mật khẩu chưa chính xác.';
             } elseif (($user['status'] ?? 'active') !== 'active') {
                 $error = 'Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ La Muse.';
             } else {
-          session_regenerate_id(true);
+                // Đăng nhập thành công.
+                session_regenerate_id(true);
 
-$_SESSION['user_id'] = (int) $user['id'];
-$_SESSION['user_name'] = (string) $user['full_name'];
-$_SESSION['user_email'] = (string) $user['email'];
-$_SESSION['user_role'] = (string) $user['role'];
+                $_SESSION['user_id'] = (int) $user['id'];
+                $_SESSION['user_name'] = (string) $user['full_name'];
+                $_SESSION['user_email'] = (string) $user['email'];
+                $_SESSION['user_role'] = (string) ($user['role'] ?? 'user');
 
-if ($_SESSION['user_role'] === 'admin') {
-    unset($_SESSION['lm_after_login']);
+                // Phân quyền chuyển hướng.
+                if ($_SESSION['user_role'] === 'admin') {
+                    unset($_SESSION['lm_after_login']);
 
-    header('Location: admin/index.php');
-    exit;
-}
+                    header('Location: admin/index.php');
+                    exit;
+                }
 
-$_SESSION['lm_after_login'] = $next;
+                // Tài khoản khách hàng.
+                $_SESSION['lm_after_login'] = $next;
 
-header('Location: ' . lm_redirect_after_login());
-exit;
-          }
-
-          $_SESSION['lm_after_login'] = $next;
-
-          header('Location: ' . lm_redirect_after_login());
-          exit;
+                header('Location: ' . lm_redirect_after_login());
+                exit;
             }
         } catch (PDOException $e) {
-            $error = 'Chưa thể đăng nhập lúc này. Hãy kiểm tra bảng users trong database lamuse.';
+            // Ghi lỗi chi tiết vào log máy chủ, không hiển thị cho khách.
+            error_log('Lỗi đăng nhập La Muse: ' . $e->getMessage());
+
+            $error = 'Chưa thể đăng nhập lúc này. Hãy kiểm tra cấu hình và bảng users trong database lamuse.';
         }
     }
 }
 ?>
+
 <!doctype html>
 <html lang="vi">
 <head>
