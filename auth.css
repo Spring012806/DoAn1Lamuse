@@ -1,0 +1,671 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Playwrite+VN:wght@400&display=swap');
+
+/* ========================================
+   1. BIẾN MÀU & THIẾT LẬP CHUNG
+======================================== */
+
+:root {
+    --forest: #0c4b17;
+    --forest-dark: #17321e;
+    --cream: #fffdf6;
+    --cream-deep: #f8f2d9;
+    --gold: #dfd4a7;
+    --muted: #7c806f;
+    --ink: #203b25;
+    --line: #dfd5b9;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 28px 18px;
+
+    font-family: 'DM Sans', Arial, sans-serif;
+    color: var(--ink);
+
+    background: linear-gradient(
+        120deg,
+        #2d6d32 0%,
+        #a9bd83 45%,
+        #f2e8b8 100%
+    );
+}
+
+a {
+    color: inherit;
+}
+
+/* ========================================
+   2. BỐ CỤC KHUNG AUTH
+======================================== */
+
+.auth-shell {
+    display: grid;
+    width: min(1080px, 100%);
+    min-height: 700px;
+
+    overflow: hidden;
+    border-radius: 22px;
+    background: var(--cream);
+    box-shadow: 0 25px 80px #1a351a20;
+}
+
+.login-shell {
+    grid-template-columns: 1fr 1fr;
+    min-height: 700px;
+    padding: 0;
+}
+
+.auth-form-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+}
+
+/* ========================================
+   3. TRANG ĐĂNG NHẬP
+======================================== */
+
+.login-form-panel {
+    padding: 46px 64px 28px;
+}
+
+.brand {
+    display: block;
+
+    font-family: 'Playfair Display', serif;
+    text-align: center;
+    color: var(--forest);
+    text-decoration: none;
+}
+
+.brand-login {
+    margin: 0 auto 42px;
+
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 5px;
+}
+
+.brand-login span {
+    display: block;
+    margin-top: 5px;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 2px;
+}
+
+.form-content {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.eyebrow,
+.story-kicker {
+    margin: 0 0 20px;
+
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--forest);
+}
+
+.script-heading {
+    margin: 0 0 12px;
+
+    font-family: 'Playwrite VN', 'Playfair Display', serif;
+    font-size: 27px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--forest);
+}
+
+.form-intro {
+    margin: 0 0 29px;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: #8a8068;
+}
+
+/* ========================================
+   4. FORM & Ô NHẬP LIỆU
+======================================== */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auth-form > label:not(.terms-label) {
+    margin-top: 0;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.auth-form input:not([type="checkbox"]) {
+    width: 100%;
+    height: 48px;
+    padding: 0 15px;
+
+    font: 13px 'DM Sans', sans-serif;
+    color: var(--ink);
+
+    background: #fffdf8;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-form input:focus {
+    border-color: #63875b;
+    box-shadow: 0 0 0 3px #63875b1c;
+}
+
+.auth-form input::placeholder {
+    color: #a59b83;
+}
+
+.password-wrap {
+    position: relative;
+}
+
+.password-wrap input {
+    padding-right: 58px !important;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+
+    padding: 6px;
+    font: 600 11px 'DM Sans', sans-serif;
+    color: var(--forest);
+
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+/* ========================================
+   5. CHECKBOX & LIÊN KẾT
+======================================== */
+
+.form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin: 8px 0 12px;
+    font-size: 10px;
+}
+
+.check-label,
+.terms-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    font-size: 10px;
+    color: #5d604f;
+}
+
+.check-label input,
+.terms-label input {
+    accent-color: var(--forest);
+}
+
+.text-link,
+.switch-auth a {
+    font-weight: 700;
+    color: var(--forest);
+    text-decoration: none;
+}
+
+.text-link:hover,
+.switch-auth a:hover {
+    text-decoration: underline;
+}
+
+/* ========================================
+   6. NÚT ĐĂNG NHẬP / ĐĂNG KÝ
+======================================== */
+
+.submit-button {
+    height: 50px;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: white;
+
+    background: var(--forest);
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+
+    transition: background 0.2s, transform 0.2s;
+}
+
+.submit-button:hover {
+    background: #083b11;
+    transform: translateY(-1px);
+}
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    margin: 32px 0 19px;
+
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #998d6d;
+}
+
+.or-divider::before,
+.or-divider::after {
+    flex: 1;
+    height: 1px;
+
+    content: '';
+    background: var(--line);
+}
+
+.switch-auth {
+    margin: 0;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    text-align: center;
+    color: #7c786b;
+}
+
+.copyright {
+    margin: auto 0 0;
+    padding-top: 28px;
+
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-align: center;
+    color: #a9a18b;
+}
+
+/* ========================================
+   7. HÌNH ẢNH / KHỐI GIỚI THIỆU
+======================================== */
+
+.auth-story {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    padding: 60px 9%;
+    background: linear-gradient(145deg, #f9f4df, #f2e8b8);
+}
+
+.login-story {
+    padding-left: 11%;
+}
+
+.story-kicker {
+    margin-bottom: 28px;
+
+    font-size: 9px;
+    letter-spacing: 3px;
+    white-space: nowrap;
+}
+
+.login-story h2 {
+    margin: 0 0 27px;
+
+    font-family: 'Playwrite VN', 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: -2px;
+    color: #273f2b;
+}
+
+.login-story h2 em {
+    font-style: normal;
+    color: #34763a;
+}
+
+.story-rule {
+    width: 55px;
+    height: 2px;
+    margin-bottom: 26px;
+
+    background: #e4d9a8;
+}
+
+.login-story > p:last-child {
+    margin: 0;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 12px;
+    line-height: 2;
+    color: #26713a;
+}
+
+/* ========================================
+   8. THÔNG BÁO LỖI
+======================================== */
+
+.form-alert {
+    margin: 0 0 17px;
+    padding: 11px 13px;
+
+    font-size: 12px;
+    line-height: 1.5;
+    color: #873e2e;
+
+    background: #fff0eb;
+    border: 1px solid #edc6b9;
+    border-radius: 7px;
+}
+
+/* ========================================
+   9. TRANG ĐĂNG KÝ
+======================================== */
+
+.register-shell {
+    grid-template-columns: 1fr 1fr;
+    width: min(1100px, 100%);
+    min-height: 700px;
+    border-radius: 0;
+}
+
+
+.register-story {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    min-height: 700px;
+    padding: 42px 36px;
+
+    color: #fffdf2;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(15, 35, 19, 0.8) 0%,
+            rgba(15, 35, 19, 0.2) 55%,
+            rgba(15, 35, 19, 0.1) 100%
+        ),
+        url("images/Hinhtrangdangki.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+.register-story::before {
+    position: absolute;
+    inset: 0;
+
+    content: '';
+    background: radial-gradient(
+        ellipse at 30% 10%,
+        #49684955,
+        transparent 55%
+    );
+
+    pointer-events: none;
+}
+
+.register-story-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.register-story .story-kicker {
+    margin-bottom: 14px;
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #fffdf2;
+}
+
+.register-story h2 {
+    margin: 0 0 15px;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #fffdf2;
+}
+
+.register-story-copy > p:last-child {
+    margin: 0;
+    font-size: 13px;
+    color: #fffdf2;
+}
+
+/* ========================================
+   10. FORM ĐĂNG KÝ
+======================================== */
+
+.register-form-panel {
+    justify-content: center;
+    padding: 35px 40px 42px;
+}
+
+.brand-register {
+    margin-bottom: 27px;
+    font-size: 34px;
+}
+
+.register-heading {
+    margin-bottom: 36px;
+    text-align: center;
+}
+
+.register-heading .script-heading {
+    margin-bottom: 8px;
+    font-size: 25px;
+}
+
+.register-heading > p {
+    margin: 0;
+    font-size: 13px;
+    color: #7b7b72;
+}
+
+.register-form {
+    gap: 8px;
+}
+
+.register-form > label:not(.terms-label) {
+    margin-top: 6px;
+
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.register-form input:not([type="checkbox"]) {
+    height: 44px;
+    font-size: 13px;
+    border-radius: 0;
+}
+
+.register-form .terms-label {
+    align-items: center;
+
+    margin: 12px 0;
+    font-size: 12px;
+}
+
+.register-form .submit-button {
+    height: 46px;
+
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+
+    background: #263f29;
+    border-radius: 0;
+}
+
+.register-switch {
+    margin-top: 39px;
+
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #252b25;
+}
+
+.register-switch a {
+    text-decoration: underline;
+}
+
+.register-form-panel .form-alert {
+    margin-top: -18px;
+}
+
+/* ========================================
+   11. RESPONSIVE: TABLET & MOBILE
+======================================== */
+
+@media (max-width: 800px) {
+    body {
+        padding: 16px;
+    }
+
+    .auth-shell {
+        min-height: auto;
+    }
+
+    .login-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .login-form-panel {
+        padding: 34px 26px 25px;
+    }
+
+    .brand-login {
+        margin-bottom: 34px;
+    }
+
+    .auth-story {
+        min-height: 360px;
+        padding: 42px 30px;
+    }
+
+    .login-story h2 {
+        font-size: 36px;
+    }
+
+    .story-kicker {
+        line-height: 1.8;
+        white-space: normal;
+    }
+
+    .copyright {
+        margin-top: 35px;
+    }
+
+    .register-shell {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .register-story {
+        order: 2;
+        min-height: 260px;
+        padding: 35px 28px;
+    }
+
+    .register-story h2 {
+        font-size: 30px;
+    }
+
+    .register-form-panel {
+        order: 1;
+        padding: 34px 26px 40px;
+    }
+
+    .register-heading {
+        margin-bottom: 25px;
+    }
+
+    .register-switch {
+        margin-top: 28px;
+    }
+}
+
+/* ========================================
+   12. RESPONSIVE: ĐIỆN THOẠI NHỎ
+======================================== */
+
+@media (max-width: 420px) {
+    body {
+        padding: 8px;
+    }
+
+    .auth-shell {
+        border-radius: 14px;
+    }
+
+    .login-form-panel {
+        padding: 28px 20px 22px;
+    }
+
+    .script-heading {
+        font-size: 23px;
+    }
+
+    .login-story h2 {
+        font-size: 31px;
+    }
+
+    .register-form-panel {
+        padding: 28px 20px 32px;
+    }
+
+    .register-story {
+        min-height: 230px;
+    }
+
+    .form-options {
+        font-size: 9px;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+}

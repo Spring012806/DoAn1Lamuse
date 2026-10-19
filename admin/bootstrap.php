@@ -2,7 +2,7 @@
 declare(strict_types=1);
 session_start();
 
-require_once dirname(__DIR__) . '/php/config.php';
+require_once dirname(__DIR__) . '/config.php';
 
 if (!isset($pdo) || !($pdo instanceof PDO)) {
     http_response_code(500);
@@ -33,12 +33,20 @@ function verify_csrf(): void {
         exit('Phiên biểu mẫu không hợp lệ. Hãy tải lại trang và thử lại.');
     }
 }
+
 function admin_logged_in(): bool {
-    return !empty($_SESSION['admin_id']);
+    return !empty($_SESSION['user_id'])
+        && (int) $_SESSION['user_id'] > 0
+        && ($_SESSION['user_role'] ?? '') === 'admin';
 }
+
 function require_admin(): void {
-    if (!admin_logged_in()) redirect('login.php');
+    if (!admin_logged_in()) {
+        http_response_code(403);
+        exit('Bạn không có quyền truy cập trang quản trị La Muse.');
+    }
 }
+
 function flash(string $type, string $message): void {
     $_SESSION['flash'] = ['type'=>$type, 'message'=>$message];
 }
