@@ -14,7 +14,7 @@ require_once __DIR__ . '/header.php';
     <span class="lm-about-year">La Muse · 2026</span>
   </section>
   <section class="lm-about-banner" aria-label="Không gian thời trang La Muse">
-    <img src="../picture/BANNERHINHANH.jpg" alt="Không gian thời trang mang cảm hứng La Muse">
+    <img src="images/BANNERHINHANH.jpg" alt="Không gian thời trang mang cảm hứng La Muse">
   </section>
   <section class="lm-about-story" id="about-story">
     <div class="lm-about-story-kicker"><span aria-hidden="true">✧</span><p>FASHION FOR YOUR STORY</p></div>
@@ -39,16 +39,16 @@ require_once __DIR__ . '/header.php';
     <div class="lm-about-gallery">
       <button class="lm-about-gallery-arrow" id="aboutGalleryPrev" type="button" aria-label="Ảnh trước">‹</button>
       <div class="lm-about-gallery-window"><div class="lm-about-gallery-track" id="aboutGalleryTrack">
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 9.jpg" alt="Thiết kế thời trang La Muse 1" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 1.jpg" alt="Thiết kế thời trang La Muse 2" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 11.jpg" alt="Thiết kế thời trang La Muse 3" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 2.jpg" alt="Thiết kế thời trang La Muse 4" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 12.jpg" alt="Thiết kế thời trang La Muse 5" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 3.jpg" alt="Thiết kế thời trang La Muse 6" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 14.jpg" alt="Thiết kế thời trang La Muse 7" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 4.jpg" alt="Thiết kế thời trang La Muse 8" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 15.jpg" alt="Thiết kế thời trang La Muse 9" loading="lazy"></figure>
-        <figure class="lm-about-gallery-item"><img src="../picture/hình 7.png" alt="Thiết kế thời trang La Muse 10" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 1.jpg" alt="Thiết kế thời trang La Muse 1" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 11.jpg" alt="Thiết kế thời trang La Muse 2" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 2.jpg" alt="Thiết kế thời trang La Muse 3" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 12.jpg" alt="Thiết kế thời trang La Muse 4" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 3.jpg" alt="Thiết kế thời trang La Muse 5" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 14.jpg" alt="Thiết kế thời trang La Muse 6" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 4.jpg" alt="Thiết kế thời trang La Muse 7" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 16.jpg" alt="Thiết kế thời trang La Muse 8" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 17.jpg" alt="Thiết kế thời trang La Muse 9" loading="lazy"></figure>
+        <figure class="lm-about-gallery-item"><img src="images/hình 18.jpg" alt="Thiết kế thời trang La Muse 10" loading="lazy"></figure>
       </div></div>
       <button class="lm-about-gallery-arrow" id="aboutGalleryNext" type="button" aria-label="Ảnh tiếp theo">›</button>
     </div>
