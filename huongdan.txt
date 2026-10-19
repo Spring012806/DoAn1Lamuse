@@ -1,5 +1,9 @@
 git clone link.git          <lấy repo(source code) về máy>
+
+
 git pull                    <cập nhật code từ github về máy>
+
+
 git add .                   <thêm tất cả file>
 git commit -m 'noidung'     <xác nhận thay đổi>
 git push                    <gửi code từ máy lên github>
