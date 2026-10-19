@@ -106,7 +106,7 @@ if (is_array($lmCart)) {
   class="search-panel"
   id="search-form"
   role="search"
-  action="/lamuse/timkiem.php"
+  action="timkiem.php"
   method="GET"
 >
   <input
