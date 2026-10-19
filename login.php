@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 
-// Nếu đã đăng nhập, chuyển đến trang phù hợp.
+// Nếu đã đăng nhập thì chuyển đến trang phù hợp với vai trò.
 if (lm_is_logged_in()) {
     header('Location: ' . lm_redirect_after_login());
     exit;
@@ -13,19 +13,41 @@ if (lm_is_logged_in()) {
 $error = '';
 $email = '';
 
-$next = (string) ($_GET['next'] ?? $_POST['next'] ?? 'index.php');
+$next = (string) (
+    $_GET['next'] ?? $_POST['next'] ?? 'index.php'
+);
+
+// Chỉ cho phép chuyển hướng đến đường dẫn nội bộ tương đối,
+// tránh chuyển hướng đến website bên ngoài.
+if (
+    $next === ''
+    || preg_match('/^(?:[a-z][a-z0-9+.-]*:|\/\/|\\\\)/i', $next)
+    || str_contains($next, "\r")
+    || str_contains($next, "\n")
+) {
+    $next = 'index.php';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
+
     $next = (string) ($_POST['next'] ?? 'index.php');
 
-    // Kiểm tra dữ liệu người dùng nhập.
+    // Kiểm tra lại đường dẫn sau khi nhận dữ liệu từ form.
+    if (
+        $next === ''
+        || preg_match('/^(?:[a-z][a-z0-9+.-]*:|\/\/|\\\\)/i', $next)
+        || str_contains($next, "\r")
+        || str_contains($next, "\n")
+    ) {
+        $next = 'index.php';
+    }
+
     if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
         $error = 'Vui lòng nhập email hợp lệ và mật khẩu.';
     } else {
         try {
-            // Tìm tài khoản theo email trong bảng users.
             $stmt = $pdo->prepare(
                 'SELECT id, full_name, email, password_hash, status, role
                  FROM users
@@ -34,12 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
             $stmt->execute([$email]);
+
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // Kiểm tra tài khoản và mật khẩu.
             if (
-                !$user ||
-                !password_verify($password, (string) $user['password_hash'])
+                !$user
+                || !password_verify(
+                    $password,
+                    (string) $user['password_hash']
+                )
             ) {
                 $error = 'Email hoặc mật khẩu chưa chính xác.';
             } elseif (($user['status'] ?? 'active') !== 'active') {
@@ -53,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_email'] = (string) $user['email'];
                 $_SESSION['user_role'] = (string) ($user['role'] ?? 'user');
 
-                // Phân quyền chuyển hướng.
+                // Nếu là quản trị viên, chuyển đến trang quản trị.
                 if ($_SESSION['user_role'] === 'admin') {
                     unset($_SESSION['lm_after_login']);
 
@@ -61,17 +87,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
 
-                // Tài khoản khách hàng.
+                // Nếu là khách hàng, lưu trang muốn đến sau đăng nhập.
                 $_SESSION['lm_after_login'] = $next;
 
                 header('Location: ' . lm_redirect_after_login());
                 exit;
             }
         } catch (PDOException $e) {
-            // Ghi lỗi chi tiết vào log máy chủ, không hiển thị cho khách.
+            // Ghi lỗi chi tiết vào log máy chủ, không hiển thị
+            // thông tin database cho người dùng.
             error_log('Lỗi đăng nhập La Muse: ' . $e->getMessage());
 
-            $error = 'Chưa thể đăng nhập lúc này. Hãy kiểm tra cấu hình và bảng users trong database lamuse.';
+            $error = 'Chưa thể đăng nhập lúc này. Hãy kiểm tra kết nối database lamuse.';
         }
     }
 }
