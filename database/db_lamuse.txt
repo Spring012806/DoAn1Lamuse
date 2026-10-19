@@ -71,7 +71,9 @@ CREATE TABLE IF NOT EXISTS `bien_the_sanpham` (
   KEY `fk_bienthe_kichthuoc` (`kich_thuoc_id`),
   KEY `idx_bienthe_sanpham` (`san_pham_id`),
   KEY `idx_bienthe_tonkho` (`so_luong_ton`)
-) ;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `bien_the_sanpham`
@@ -268,7 +270,9 @@ CREATE TABLE IF NOT EXISTS `sanpham` (
   KEY `idx_sanpham_trangthai` (`trang_thai`),
   KEY `idx_sanpham_noibat` (`noi_bat`),
   KEY `idx_sanpham_ten` (`ten_san_pham`)
-) ;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `sanpham`

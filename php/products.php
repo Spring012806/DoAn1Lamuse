@@ -140,6 +140,7 @@ uasort($allSizes, function ($a, $b) {
 $pageTitle = 'Sản phẩm | La Muse';
 include __DIR__ . '/header.php';
 ?>
+<link rel="stylesheet" href="../css/products.css">
 
 <main class="lm-products-page">
   <section class="lm-shop-hero">
@@ -298,5 +299,5 @@ include __DIR__ . '/header.php';
   </section>
 </main>
 
-<script src="../js/sanpham.js"></script>
+<script src="products.js"></script>
 <?php include __DIR__ . '/footer.php'; ?>

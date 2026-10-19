@@ -17,25 +17,43 @@ $('.menu-toggle').addEventListener('click', () => {
 });
 $$('.nav a').forEach(link => link.addEventListener('click', () => header.classList.remove('menu-open')));
 
-// Search panel filters the visible product cards
-$('.search-toggle').addEventListener('click', () => {
-  $('#search-form').classList.toggle('open');
-  if ($('#search-form').classList.contains('open')) $('#search-input').focus();
-});
-$('.close-search').addEventListener('click', () => $('#search-form').classList.remove('open'));
-$('#search-form').addEventListener('submit', event => {
-  event.preventDefault();
-  const query = $('#search-input').value.trim().toLocaleLowerCase('vi');
-  let count = 0;
-  $$('.product-card').forEach(card => {
-    const matches = !query || card.dataset.name.toLocaleLowerCase('vi').includes(query);
-    card.hidden = !matches;
-    if (matches) count++;
+
+
+/* Search: gửi từ khóa đến timkiem.php */
+const searchToggle = $('.search-toggle');
+const searchForm = $('#search-form');
+const searchInput = $('#search-input');
+const closeSearch = $('.close-search');
+
+if (searchToggle && searchForm && searchInput) {
+  searchToggle.addEventListener('click', () => {
+    const opened = searchForm.classList.toggle('open');
+
+    if (opened) {
+      searchInput.focus();
+    }
   });
-  $('#products').scrollIntoView({ behavior: 'smooth' });
-  $('#search-form').classList.remove('open');
-  toast(query ? `Tìm thấy ${count} sản phẩm phù hợp.` : 'Đang hiển thị tất cả sản phẩm.');
-});
+
+  if (closeSearch) {
+    closeSearch.addEventListener('click', () => {
+      searchForm.classList.remove('open');
+    });
+  }
+
+  searchForm.addEventListener('submit', (event) => {
+    const keyword = searchInput.value.trim();
+
+    if (keyword.length < 2) {
+      event.preventDefault();
+      searchInput.focus();
+      return;
+    }
+
+    // Từ khóa hợp lệ: để trình duyệt tự gửi form GET.
+  });
+}
+
+
 
 // Simple cart demo
 let cartCount = 0;
@@ -56,19 +74,24 @@ $$('.heart').forEach(button => button.addEventListener('click', () => {
   toast(liked ? 'Đã lưu vào danh sách yêu thích.' : 'Đã bỏ khỏi danh sách yêu thích.');
 }));
 
-// Account placeholder: replace with your real login/register page when backend is ready
-$('#account-button').addEventListener('click', () => {
-  const current = $('#account-label').textContent;
-  if (current === 'Đăng nhập') {
-    const name = window.prompt('Tên hiển thị của nàng (để thử giao diện đăng nhập):');
-    if (name && name.trim()) {
-      $('#account-label').textContent = name.trim();
-      toast(`Xin chào, ${name.trim()}. Chức năng này hiện là bản demo giao diện.`);
+
+/* Tài khoản: chuyển đến trang đăng nhập thật */
+const accountButton = $('#account-button');
+
+if (accountButton) {
+  // Nếu là thẻ a, trình duyệt tự chuyển trang theo thuộc tính href.
+  // Không dùng prompt demo nữa.
+  accountButton.addEventListener('click', (event) => {
+    if (accountButton.tagName.toLowerCase() === 'a') {
+      return;
     }
-  } else {
-    toast(`Xin chào ${current} — đây là bản demo tài khoản.`);
-  }
-});
+
+    // Hỗ trợ nếu header vẫn đang dùng button.
+    event.preventDefault();
+    window.location.href = 'login.php';
+  });
+}
+
 
 // Newsletter demo
 $('#newsletter-form').addEventListener('submit', event => {
@@ -81,49 +104,51 @@ $('#newsletter-form').addEventListener('submit', event => {
   }
 });
 
-// Hero slides: change background crop/image without a heavy slider dependency
-
+// Hero slides: chỉ chạy ở trang có banner
 const heroImages = [
   './images/wallpaper1.jpg',
   './images/wallpaper2.jpg',
   './images/wallpaper3.jpg'
 ];
 
-let heroIndex = 0;
+const heroImage = $('.hero-image');
+const heroPagination = $('.hero-pagination');
+const heroSection = $('.hero');
+const heroPrev = $('.hero-arrow.prev');
+const heroNext = $('.hero-arrow.next');
 
-function setHero(index) {
-  heroIndex = (index + heroImages.length) % heroImages.length;
+if (heroImage && heroPagination && heroSection && heroPrev && heroNext) {
+  let heroIndex = 0;
+  let heroAutoTimer;
 
-  const image = $('.hero-image');
-  image.style.backgroundImage = `url("${heroImages[heroIndex]}")`;
+  function setHero(index) {
+    heroIndex = (index + heroImages.length) % heroImages.length;
+    heroImage.style.backgroundImage =
+      `url("${heroImages[heroIndex]}")`;
 
-  $('.hero-pagination').innerHTML = heroImages.map((_, i) =>
-    `<span style="opacity:${i === heroIndex ? 1 : .55}">${String(i + 1).padStart(2, '0')}</span>${i < heroImages.length - 1 ? '<i></i>' : ''}`
-  ).join('');
+    heroPagination.innerHTML = heroImages.map((_, i) =>
+      `<span style="opacity:${i === heroIndex ? 1 : 0.55}">
+        ${String(i + 1).padStart(2, '0')}
+      </span>${i < heroImages.length - 1 ? '<i></i>' : ''}`
+    ).join('');
+  }
+
+  function startAutoSlide() {
+    clearInterval(heroAutoTimer);
+    heroAutoTimer = setInterval(() => {
+      setHero(heroIndex + 1);
+    }, 6500);
+  }
+
+  setHero(0);
+  startAutoSlide();
+
+  heroPrev.addEventListener('click', () => setHero(heroIndex - 1));
+  heroNext.addEventListener('click', () => setHero(heroIndex + 1));
+
+  heroSection.addEventListener('mouseenter', () => {
+    clearInterval(heroAutoTimer);
+  });
+
+  heroSection.addEventListener('mouseleave', startAutoSlide);
 }
-
-setHero(0);
-
-$('.hero-arrow.prev').addEventListener('click', () => setHero(heroIndex - 1));
-$('.hero-arrow.next').addEventListener('click', () => setHero(heroIndex + 1));
-
-
-
-/* Hero tự động chuyển ảnh mỗi 6,5 giây */
-let heroAutoTimer = setInterval(() => {
-  setHero(heroIndex + 1);
-}, 6500);
-
-// Tạm dừng khi rê chuột vào banner
-const heroSection = document.querySelector('.hero');
-
-heroSection.addEventListener('mouseenter', () => {
-  clearInterval(heroAutoTimer);
-});
-
-heroSection.addEventListener('mouseleave', () => {
-  clearInterval(heroAutoTimer);
-  heroAutoTimer = setInterval(() => {
-    setHero(heroIndex + 1);
-  }, 6500);
-});

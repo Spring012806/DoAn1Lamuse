@@ -63,7 +63,7 @@
         </p>
 
         <!-- GẮN LINK TRANG SẢN PHẨM DÔ ĐÂY -->
-        <a href="sanpham.html" class="shop-button">
+        <a href="products.php" class="shop-button">
           <span>TIẾP TỤC MUA SẮM</span>
           <span class="button-arrow">⟶</span>
         </a>

@@ -15,9 +15,6 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&family=Parisienne&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/footer.css" />
-    <link rel="stylesheet" href="../css/header.css" />
-    <link rel="stylesheet" href="..//css/gioithieu.css" />
     <title>Giới thiệu | La Muse</title>
 
     <!--KẾT NỐI VỚI GG FONTFONT-->
@@ -27,8 +24,7 @@
       href="https://fonts.googleapis.com/css2?family=Agbalumo&family=Alice&family=Pacifico&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Playwrite+AR:wght@100..400&family=Playwrite+CA+Guides&family=Playwrite+CU+Guides&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
       rel="stylesheet"
     />
-  </head>
-
+</head>
   <body>
     <?php include 'header.php'; ?>
     

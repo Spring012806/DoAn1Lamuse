@@ -1,0 +1,886 @@
+/* =========================================================
+   LA MUSE — ĐĂNG NHẬP & ĐĂNG KÝ
+   Phong cách: Thanh lịch, cao cấp, xanh lá và kem
+   ========================================================= */
+
+/* =========================================================
+   1. FONT CHỮ
+   ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Playwrite+VN:wght@400&display=swap");
+
+/* =========================================================
+   2. BIẾN MÀU CHUNG
+   ========================================================= */
+
+:root {
+  --forest: #0c4b17;
+  --forest-dark: #17321e;
+  --forest-light: #306d29;
+
+  --cream: #fffdf6;
+  --cream-deep: #f8f2d9;
+  --gold: #dfd4a7;
+
+  --muted: #7c806f;
+  --ink: #203b25;
+  --line: #dfd5b9;
+
+  --white: #ffffff;
+  --error: #873e2e;
+}
+
+/* =========================================================
+   3. THIẾT LẬP CHUNG
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #253c22;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+
+  display: grid;
+  place-items: center;
+
+  min-height: 100vh;
+  margin: 0;
+  padding: 28px 18px;
+
+  font-family: "DM Sans", Arial, sans-serif;
+  color: var(--ink);
+
+  /* Nền gradient chuyển màu */
+  background: linear-gradient(
+    135deg,
+    #253c22 0%,
+    #0d530e 25%,
+    #306d29 45%,
+    #e7e1b1 72%,
+    #fbf5dd 100%
+  );
+
+  background-size: 300% 300%;
+  background-position: 0% 50%;
+
+  animation: gradientMove 10s ease infinite;
+}
+
+/* Di chuyển gradient để tạo hiệu ứng chuyển màu */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* =========================================================
+   4. KHUNG CHUNG ĐĂNG NHẬP / ĐĂNG KÝ
+   ========================================================= */
+
+.auth-shell {
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+
+  width: min(1080px, 100%);
+  min-height: 700px;
+
+  overflow: hidden;
+  border-radius: 22px;
+
+  background: var(--cream);
+
+  box-shadow: 0 25px 80px rgba(26, 53, 26, 0.18);
+}
+
+.auth-form-panel {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  background: var(--cream);
+}
+
+/* =========================================================
+   5. KHUNG TRANG ĐĂNG NHẬP
+   ========================================================= */
+
+.login-shell {
+  grid-template-columns: 1fr 1fr;
+
+  min-height: 700px;
+  padding: 0;
+}
+
+.login-form-panel {
+  padding: 46px 64px 28px;
+}
+
+/* =========================================================
+   6. LOGO LA MUSE
+   ========================================================= */
+
+.brand {
+  display: block;
+
+  font-family: "Playfair Display", serif;
+  text-align: center;
+
+  color: var(--forest);
+  text-decoration: none;
+}
+
+.brand-login {
+  margin: 0 auto 42px;
+
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 5px;
+}
+
+.brand-login span {
+  display: block;
+
+  margin-top: 5px;
+
+  font-family: "Playfair Display", serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 2px;
+}
+
+.brand-register {
+  margin-bottom: 27px;
+
+  font-size: 34px;
+}
+
+/* =========================================================
+   7. NỘI DUNG GIỚI THIỆU FORM
+   ========================================================= */
+
+.form-content {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.eyebrow,
+.story-kicker {
+  margin: 0 0 20px;
+
+  font-size: 10px;
+  letter-spacing: 3px;
+
+  color: var(--forest);
+}
+
+.script-heading {
+  margin: 0 0 12px;
+
+  font-family: "Playwrite VN", "Playfair Display", serif;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  color: var(--forest);
+}
+
+.form-intro {
+  margin: 0 0 29px;
+
+  font-family: "Playfair Display", serif;
+  font-size: 13px;
+  font-style: italic;
+
+  color: #8a8068;
+}
+
+/* =========================================================
+   8. FORM VÀ Ô NHẬP LIỆU
+   ========================================================= */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-form > label:not(.terms-label) {
+  margin-top: 0;
+
+  font-family: "Playfair Display", serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-form input:not([type="checkbox"]) {
+  display: block;
+
+  width: 100%;
+  height: 48px;
+  padding: 0 15px;
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+
+  color: var(--ink);
+  background: #fffdf8;
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.auth-form input:not([type="checkbox"]):focus {
+  border-color: #63875b;
+
+  box-shadow: 0 0 0 3px rgba(99, 135, 91, 0.12);
+}
+
+.auth-form input::placeholder {
+  color: #a59b83;
+}
+
+/* =========================================================
+   9. Ô MẬT KHẨU VÀ NÚT HIỆN / ẨN
+   ========================================================= */
+
+.password-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrap input {
+  padding-right: 58px !important;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+
+  transform: translateY(-50%);
+
+  padding: 6px;
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+
+  color: var(--forest);
+  background: transparent;
+
+  border: 0;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--forest-light);
+}
+
+/* =========================================================
+   10. TÙY CHỌN FORM VÀ CHECKBOX
+   ========================================================= */
+
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 10px;
+  margin: 8px 0 12px;
+
+  font-size: 10px;
+}
+
+.check-label,
+.terms-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  font-size: 10px;
+  color: #5d604f;
+}
+
+.check-label input,
+.terms-label input {
+  flex-shrink: 0;
+  accent-color: var(--forest);
+}
+
+.text-link,
+.switch-auth a {
+  font-weight: 700;
+
+  color: var(--forest);
+  text-decoration: none;
+}
+
+.text-link:hover,
+.switch-auth a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   11. NÚT ĐĂNG NHẬP / ĐĂNG KÝ
+   ========================================================= */
+
+.submit-button {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 18px;
+
+  font-family: "Playfair Display", serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  color: white;
+  background: var(--forest);
+
+  border: 0;
+  border-radius: 7px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.submit-button:hover {
+  background: #083b11;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 5px 14px rgba(12, 75, 23, 0.15);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+/* =========================================================
+   12. ĐƯỜNG KẺ PHÂN CÁCH
+   ========================================================= */
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  margin: 32px 0 19px;
+
+  font-size: 10px;
+  letter-spacing: 2px;
+
+  color: #998d6d;
+}
+
+.or-divider::before,
+.or-divider::after {
+  flex: 1;
+
+  height: 1px;
+
+  content: "";
+  background: var(--line);
+}
+
+/* =========================================================
+   13. LIÊN KẾT CHUYỂN TRANG VÀ BẢN QUYỀN
+   ========================================================= */
+
+.switch-auth {
+  margin: 0;
+
+  font-family: "Playfair Display", serif;
+  font-size: 11px;
+
+  text-align: center;
+  color: #7c786b;
+}
+
+.copyright {
+  margin: auto 0 0;
+  padding-top: 28px;
+
+  font-size: 8px;
+  letter-spacing: 2px;
+
+  text-align: center;
+  color: #a9a18b;
+}
+
+/* =========================================================
+   14. KHỐI GIỚI THIỆU TRANG ĐĂNG NHẬP
+   ========================================================= */
+
+.auth-story {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-width: 0;
+  padding: 60px 9%;
+
+  background: linear-gradient(145deg, #f9f4df, #f2e8b8);
+}
+
+.login-story {
+  padding-left: 11%;
+}
+
+.story-kicker {
+  margin-bottom: 28px;
+
+  font-size: 9px;
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
+
+.login-story h2 {
+  margin: 0 0 27px;
+
+  font-family: "Playwrite VN", "Playfair Display", serif;
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -2px;
+
+  color: #273f2b;
+}
+
+.login-story h2 em {
+  font-style: normal;
+  color: #34763a;
+}
+
+.story-rule {
+  width: 55px;
+  height: 2px;
+
+  margin-bottom: 26px;
+
+  background: #e4d9a8;
+}
+
+.login-story > p:last-child {
+  margin: 0;
+
+  font-family: "Playfair Display", serif;
+  font-size: 12px;
+  line-height: 2;
+
+  color: #26713a;
+}
+
+/* =========================================================
+   15. THÔNG BÁO LỖI
+   ========================================================= */
+
+.form-alert {
+  margin: 0 0 17px;
+  padding: 11px 13px;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  color: var(--error);
+  background: #fff0eb;
+
+  border: 1px solid #edc6b9;
+  border-radius: 7px;
+}
+
+/* =========================================================
+   16. KHUNG TRANG ĐĂNG KÝ
+   ========================================================= */
+
+.register-shell {
+  grid-template-columns: 1fr 1fr;
+
+  width: min(1100px, 100%);
+  min-height: 700px;
+
+  border-radius: 0;
+}
+
+/* =========================================================
+   17. ẢNH NỀN TRANG ĐĂNG KÝ
+   ========================================================= */
+
+/*
+   QUAN TRỌNG:
+   Đường dẫn dưới đây tính từ VỊ TRÍ FILE CSS.
+
+   Nếu CSS nằm trong LaMuse/css/
+   và ảnh nằm trong LaMuse/images/
+   thì dùng: ../images/Hinhtrangdangki.jpg
+
+   Nếu ảnh nằm trong LaMuse/picture/
+   hãy đổi thành: ../picture/Hinhtrangdangki.jpg
+*/
+
+.register-story {
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  min-width: 0;
+  min-height: 700px;
+
+  padding: 42px 36px;
+
+  overflow: hidden;
+
+  color: #fffdf2;
+
+  /* Lớp phủ nhẹ kết hợp ảnh nền */
+  background-image:
+    linear-gradient(
+      to top,
+      rgba(15, 35, 19, 0.55) 0%,
+      rgba(15, 35, 19, 0.15) 55%,
+      rgba(15, 35, 19, 0.05) 100%
+    ),
+    url("../picture/Hinhtrangdangki.jpg");
+
+  background-color: #536b49;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Ánh sáng trang trí trên ảnh */
+.register-story::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+
+  content: "";
+
+  background: radial-gradient(
+    ellipse at 30% 10%,
+    rgba(73, 104, 73, 0.25),
+    transparent 55%
+  );
+
+  pointer-events: none;
+}
+
+.register-story-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.register-story .story-kicker {
+  margin-bottom: 14px;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+
+  color: #fffdf2;
+  white-space: normal;
+}
+
+.register-story h2 {
+  margin: 0 0 15px;
+
+  font-family: "Playfair Display", serif;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.3;
+
+  color: #fffdf2;
+}
+
+.register-story-copy > p:last-child {
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.8;
+
+  color: #fffdf2;
+}
+
+/* =========================================================
+   18. FORM TRANG ĐĂNG KÝ
+   ========================================================= */
+
+.register-form-panel {
+  justify-content: center;
+
+  padding: 35px 40px 42px;
+}
+
+.register-heading {
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.register-heading .script-heading {
+  margin-bottom: 8px;
+  font-size: 25px;
+}
+
+.register-heading > p {
+  margin: 0;
+
+  font-size: 13px;
+  color: #7b7b72;
+}
+
+.register-form {
+  gap: 8px;
+}
+
+.register-form > label:not(.terms-label) {
+  margin-top: 6px;
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.register-form input:not([type="checkbox"]) {
+  height: 44px;
+
+  font-size: 13px;
+  border-radius: 0;
+}
+
+.register-form .terms-label {
+  align-items: center;
+
+  margin: 12px 0;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.register-form .submit-button {
+  min-height: 46px;
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+
+  background: #263f29;
+  border-radius: 0;
+}
+
+.register-form .submit-button:hover {
+  background: #0c4b17;
+}
+
+.register-switch {
+  margin-top: 39px;
+
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+
+  color: #252b25;
+}
+
+.register-switch a {
+  text-decoration: underline;
+}
+
+.register-form-panel .form-alert {
+  margin-top: -18px;
+}
+
+/* =========================================================
+   19. HIỆU ỨNG FOCUS CHO LIÊN KẾT VÀ NÚT
+   ========================================================= */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #63875b;
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   20. RESPONSIVE: TABLET VÀ ĐIỆN THOẠI
+   ========================================================= */
+
+@media (max-width: 800px) {
+  body {
+    padding: 16px;
+  }
+
+  .auth-shell {
+    min-height: auto;
+  }
+
+  /* Trang đăng nhập chuyển thành một cột */
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-form-panel {
+    padding: 34px 26px 25px;
+  }
+
+  .brand-login {
+    margin-bottom: 34px;
+  }
+
+  .auth-story {
+    min-height: 360px;
+    padding: 42px 30px;
+  }
+
+  .login-story h2 {
+    font-size: 36px;
+  }
+
+  .story-kicker {
+    line-height: 1.8;
+    white-space: normal;
+  }
+
+  .copyright {
+    margin-top: 35px;
+  }
+
+  /* Trang đăng ký chuyển thành một cột */
+  .register-shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .register-story {
+    order: 2;
+
+    min-height: 300px;
+    padding: 35px 28px;
+
+    background-position: center;
+  }
+
+  .register-story h2 {
+    font-size: 30px;
+  }
+
+  .register-form-panel {
+    order: 1;
+
+    padding: 34px 26px 40px;
+  }
+
+  .register-heading {
+    margin-bottom: 25px;
+  }
+
+  .register-switch {
+    margin-top: 28px;
+  }
+}
+
+/* =========================================================
+   21. RESPONSIVE: ĐIỆN THOẠI NHỎ
+   ========================================================= */
+
+@media (max-width: 420px) {
+  body {
+    padding: 8px;
+  }
+
+  .auth-shell {
+    border-radius: 14px;
+  }
+
+  .login-form-panel {
+    padding: 28px 20px 22px;
+  }
+
+  .script-heading {
+    font-size: 23px;
+  }
+
+  .login-story h2 {
+    font-size: 31px;
+  }
+
+  .register-form-panel {
+    padding: 28px 20px 32px;
+  }
+
+  .register-story {
+    min-height: 250px;
+    padding: 28px 22px;
+  }
+
+  .register-story h2 {
+    font-size: 27px;
+  }
+
+  .form-options {
+    font-size: 9px;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .brand-register {
+    font-size: 30px;
+  }
+
+  .register-heading .script-heading {
+    font-size: 22px;
+  }
+}
