@@ -2,54 +2,177 @@
 require_once __DIR__.'/bootstrap.php';require_admin();$pageTitle='Tồn kho & biến thể';$active='variants';$error='';
 if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();$id=(int)($_POST['id']??0);try{if(($_POST['action']??'')==='delete'){$pdo->prepare("DELETE FROM bien_the_sanpham WHERE id=?")->execute([$id]);flash('success','Đã xóa biến thể.');}else{$product=(int)($_POST['san_pham_id']??0);$color=(int)($_POST['mau_sac_id']??0);$size=(int)($_POST['kich_thuoc_id']??0);
 // Tự sinh SKU từ mã sản phẩm + mã màu + size
-$sku = '';
 
-$productStmt = $pdo->prepare(
-    "SELECT ma_san_pham FROM sanpham WHERE id = ?"
+$product = (int)($_POST['san_pham_id'] ?? 0);
+$color   = (int)($_POST['mau_sac_id'] ?? 0);
+$size    = (int)($_POST['kich_thuoc_id'] ?? 0);
+$price   = trim((string)($_POST['gia_ban'] ?? ''));
+$stock   = filter_var(
+    $_POST['so_luong_ton'] ?? null,
+    FILTER_VALIDATE_INT
 );
-$productStmt->execute([$product]);
-$productCode = trim((string)$productStmt->fetchColumn());
-
-$colorStmt = $pdo->prepare(
-    "SELECT ten_mau FROM mausac WHERE id = ?"
+$status  = filter_var(
+    $_POST['trang_thai'] ?? 1,
+    FILTER_VALIDATE_INT
 );
-$colorStmt->execute([$color]);
-$colorName = trim((string)$colorStmt->fetchColumn());
 
-$sizeStmt = $pdo->prepare(
-    "SELECT ten_size FROM kichthuoc WHERE id = ?"
-);
-$sizeStmt->execute([$size]);
-$sizeName = trim((string)$sizeStmt->fetchColumn());
-
-if ($productCode === '' || $colorName === '' || $sizeName === '') {
-    throw new RuntimeException('Sản phẩm, màu sắc hoặc kích thước không hợp lệ.');
+if ($product < 1 || $color < 1 || $size < 1) {
+    throw new RuntimeException('Vui lòng chọn sản phẩm, màu sắc và size.');
 }
 
-// Chuyển tên màu thành mã ngắn, ví dụ Trắng -> TR, Hồng -> HO
-$normalize = static function (string $value): string {
-    $value = mb_strtoupper(trim($value), 'UTF-8');
-    $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+if ($stock === false || $stock < 0) {
+    throw new RuntimeException('Tồn kho phải là số nguyên không âm.');
+}
 
-    if ($converted !== false) {
-        $value = $converted;
-    }
+if (!in_array($status, [0, 1], true)) {
+    throw new RuntimeException('Trạng thái biến thể không hợp lệ.');
+}
 
-    $value = preg_replace('/[^A-Z0-9]/', '', $value);
-    return $value ?: 'XX';
-};
+if (
+    $price !== ''
+    && (!is_numeric($price) || (float)$price < 0)
+) {
+    throw new RuntimeException('Giá riêng phải là số không âm.');
+}
 
-$colorCode = substr($normalize($colorName), 0, 2);
-$sizeCode = $normalize($sizeName);
+// Xác nhận sản phẩm, màu và size tồn tại, đang hoạt động.
+$check = $pdo->prepare(
+    'SELECT id FROM sanpham WHERE id = ?'
+);
+$check->execute([$product]);
 
-$sku = $productCode . '-' . $colorCode . '-' . $sizeCode;
-$price=trim((string)($_POST['gia_ban']??''));$stock=(int)($_POST['so_luong_ton']??0);$status=(int)($_POST['trang_thai']??1);
-if (!$product || !$color || !$size || $sku === '' || $stock < 0) {
+if (!$check->fetchColumn()) {
+    throw new RuntimeException('Sản phẩm không tồn tại.');
+}
+
+$check = $pdo->prepare(
+    'SELECT id FROM mausac WHERE id = ? AND trang_thai = 1'
+);
+$check->execute([$color]);
+
+if (!$check->fetchColumn()) {
+    throw new RuntimeException('Màu sắc không tồn tại hoặc đã ngừng hoạt động.');
+}
+
+$check = $pdo->prepare(
+    'SELECT id FROM kichthuoc WHERE id = ? AND trang_thai = 1'
+);
+$check->execute([$size]);
+
+if (!$check->fetchColumn()) {
+    throw new RuntimeException('Size không tồn tại hoặc đã ngừng hoạt động.');
+}
+
+
+$check = $pdo->prepare(
+    'SELECT id
+     FROM bien_the_sanpham
+     WHERE san_pham_id = ?
+       AND mau_sac_id = ?
+       AND kich_thuoc_id = ?
+       AND id <> ?
+     LIMIT 1'
+);
+
+$check->execute([$product, $color, $size, $id]);
+
+if ($check->fetchColumn()) {
     throw new RuntimeException(
-        'Vui lòng chọn sản phẩm, màu, size hợp lệ và nhập tồn kho không âm.'
+        'Biến thể này đã tồn tại. Vui lòng chọn tổ hợp màu và size khác.'
     );
 }
-$vals=[$product,$color,$size,$sku,$price===''?null:(float)$price,$stock,$status];if($id){$vals[]=$id;$pdo->prepare("UPDATE bien_the_sanpham SET san_pham_id=?,mau_sac_id=?,kich_thuoc_id=?,sku=?,gia_ban=?,so_luong_ton=?,trang_thai=? WHERE id=?")->execute($vals);}else $pdo->prepare("INSERT INTO bien_the_sanpham (san_pham_id,mau_sac_id,kich_thuoc_id,sku,gia_ban,so_luong_ton,trang_thai) VALUES (?,?,?,?,?,?,?)")->execute($vals);flash('success','Đã lưu biến thể và tồn kho.');}}catch(Throwable $e){flash('error',$e instanceof PDOException?'Không thể lưu: SKU hoặc tổ hợp sản phẩm/màu/size đã tồn tại, hoặc dữ liệu không hợp lệ.':$e->getMessage());}redirect('variants.php'.(!empty($_GET['product_id'])?'?product_id='.(int)$_GET['product_id']:''));}
+
+
+// Nếu sửa biến thể, giữ SKU cũ khi tổ hợp không đổi.
+$sku = '';
+
+if ($id > 0) {
+    $oldStmt = $pdo->prepare(
+        'SELECT san_pham_id, mau_sac_id, kich_thuoc_id, sku
+         FROM bien_the_sanpham
+         WHERE id = ?'
+    );
+    $oldStmt->execute([$id]);
+    $oldVariant = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$oldVariant) {
+        throw new RuntimeException('Không tìm thấy biến thể cần sửa.');
+    }
+
+    if (
+        (int)$oldVariant['san_pham_id'] === $product
+        && (int)$oldVariant['mau_sac_id'] === $color
+        && (int)$oldVariant['kich_thuoc_id'] === $size
+    ) {
+        $sku = (string)$oldVariant['sku'];
+    }
+}
+
+// Nếu là biến thể mới hoặc đã đổi tổ hợp, tạo SKU mới.
+if ($sku === '') {
+    $stmt = $pdo->prepare(
+        'SELECT ma_san_pham FROM sanpham WHERE id = ?'
+    );
+    $stmt->execute([$product]);
+    $productCode = trim((string)$stmt->fetchColumn());
+
+    $stmt = $pdo->prepare(
+        'SELECT ten_mau FROM mausac WHERE id = ?'
+    );
+    $stmt->execute([$color]);
+    $colorName = trim((string)$stmt->fetchColumn());
+
+    $stmt = $pdo->prepare(
+        'SELECT ten_size FROM kichthuoc WHERE id = ?'
+    );
+    $stmt->execute([$size]);
+    $sizeName = trim((string)$stmt->fetchColumn());
+
+    if ($productCode === '' || $colorName === '' || $sizeName === '') {
+        throw new RuntimeException('Không thể tạo SKU từ dữ liệu đã chọn.');
+    }
+
+    $normalize = static function (string $value): string {
+        $value = mb_strtoupper(trim($value), 'UTF-8');
+        $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+
+        if ($converted !== false) {
+            $value = $converted;
+        }
+
+        $value = preg_replace('/[^A-Z0-9]/', '', $value);
+        return $value !== '' ? $value : 'XX';
+    };
+
+    $colorCode = substr($normalize($colorName), 0, 2);
+    $sizeCode = $normalize($sizeName);
+
+    $baseSku = $productCode . '-' . $colorCode . '-' . $sizeCode;
+    $sku = $baseSku;
+
+    // Tránh xung đột SKU với biến thể khác.
+    $suffix = 2;
+    $checkSku = $pdo->prepare(
+        'SELECT id FROM bien_the_sanpham WHERE sku = ? AND id <> ? LIMIT 1'
+    );
+
+    do {
+        $checkSku->execute([$sku, $id]);
+        if (!$checkSku->fetchColumn()) {
+            break;
+        }
+
+        $sku = $baseSku . '-' . $suffix;
+        $suffix++;
+    } while (true);
+
+    if (strlen($sku) > 60) {
+        throw new RuntimeException('SKU vượt quá độ dài cho phép.');
+    }
+}
+
+$vals=[$product,$color,$size,$sku,$price===''?null:(float)$price,$stock,$status];
+if($id){$vals[]=$id;$pdo->prepare("UPDATE bien_the_sanpham SET san_pham_id=?,mau_sac_id=?,kich_thuoc_id=?,sku=?,gia_ban=?,so_luong_ton=?,trang_thai=? WHERE id=?")->execute($vals);}else $pdo->prepare("INSERT INTO bien_the_sanpham (san_pham_id,mau_sac_id,kich_thuoc_id,sku,gia_ban,so_luong_ton,trang_thai) VALUES (?,?,?,?,?,?,?)")->execute($vals);flash('success','Đã lưu biến thể và tồn kho.');}}catch(Throwable $e){flash('error',$e instanceof PDOException?'Không thể lưu: SKU hoặc tổ hợp sản phẩm/màu/size đã tồn tại, hoặc dữ liệu không hợp lệ.':$e->getMessage());}redirect('variants.php'.(!empty($_GET['product_id'])?'?product_id='.(int)$_GET['product_id']:''));}
 $products=$pdo->query("SELECT id,ma_san_pham,ten_san_pham FROM sanpham ORDER BY ten_san_pham")->fetchAll();$colors=$pdo->query("SELECT id,ten_mau FROM mausac WHERE trang_thai=1 ORDER BY ten_mau")->fetchAll();$sizes=$pdo->query("SELECT id,ten_size FROM kichthuoc WHERE trang_thai=1 ORDER BY thu_tu")->fetchAll();
 $edit=null;if(isset($_GET['edit'])){$s=$pdo->prepare("SELECT * FROM bien_the_sanpham WHERE id=?");$s->execute([(int)$_GET['edit']]);$edit=$s->fetch();}
 $productFilter=(int)($_GET['product_id']??0);$sql="SELECT b.*,p.ten_san_pham,p.ma_san_pham,m.ten_mau,k.ten_size FROM bien_the_sanpham b JOIN sanpham p ON p.id=b.san_pham_id LEFT JOIN mausac m ON m.id=b.mau_sac_id LEFT JOIN kichthuoc k ON k.id=b.kich_thuoc_id";$params=[];if($productFilter){$sql.=" WHERE b.san_pham_id=?";$params[]=$productFilter;}$sql.=" ORDER BY p.ten_san_pham,m.ten_mau,k.thu_tu";$s=$pdo->prepare($sql);$s->execute($params);$rows=$s->fetchAll();require __DIR__.'/admin-header.php';?>

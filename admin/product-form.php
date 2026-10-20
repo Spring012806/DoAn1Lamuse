@@ -89,8 +89,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Không tạo được mã sản phẩm. Vui lòng thử lại.');
         }
         if (!is_numeric($product['danh_muc_id']) || (int)$product['danh_muc_id'] < 1) throw new RuntimeException('Vui lòng chọn danh mục.');
+        $categoryCheck = $pdo->prepare(
+    'SELECT id FROM danhmuc WHERE id = ? AND trang_thai = 1'
+);
+
+$categoryCheck->execute([
+    (int)$product['danh_muc_id']
+]);
+
+if (!$categoryCheck->fetchColumn()) {
+    throw new RuntimeException(
+        'Danh mục không tồn tại hoặc đã ngừng hoạt động.'
+    );
+}
         if (!is_numeric($product['gia_niem_yet']) || (float)$product['gia_niem_yet'] < 0) throw new RuntimeException('Giá niêm yết không hợp lệ.');
-        if ($product['gia_khuyen_mai'] !== '' && (!is_numeric($product['gia_khuyen_mai']) || (float)$product['gia_khuyen_mai'] < 0)) throw new RuntimeException('Giá khuyến mãi không hợp lệ.');
+
+if (
+    $product['gia_khuyen_mai'] !== ''
+    && (
+        !is_numeric($product['gia_khuyen_mai'])
+        || (float)$product['gia_khuyen_mai'] <= 0
+    )
+) {
+    throw new RuntimeException('Giá khuyến mãi phải là số lớn hơn 0.');
+}
+
+if (
+    $product['gia_khuyen_mai'] !== ''
+    && (float)$product['gia_khuyen_mai'] >= (float)$product['gia_niem_yet']
+) {
+    throw new RuntimeException('Giá khuyến mãi phải thấp hơn giá niêm yết.');
+}
+
         if (!in_array($product['trang_thai'], ['dang_ban','an','ngung_kinh_doanh'], true)) throw new RuntimeException('Trạng thái không hợp lệ.');
 
         $oldCover = $product['anh_dai_dien'] ?: null;
