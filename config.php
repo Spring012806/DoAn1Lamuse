@@ -1,4 +1,3 @@
-
 <?php
 $host = 'localhost';
 $dbname = 'lamuse'; // Phải trùng tên database trong phpMyAdmin

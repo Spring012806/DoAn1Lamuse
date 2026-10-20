@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/config.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -11,6 +11,11 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 $userId = (int)($_SESSION['user_id'] ?? 0);
 if ($userId <= 0) {
     header('Location: login.php?next=account.php');
+    exit;
+}
+
+if (($_SESSION['user_role'] ?? '') === 'admin') {
+    header('Location: admin/index.php');
     exit;
 }
 
@@ -51,7 +56,14 @@ try {
 
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'logout') {
-            unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_email'], $_SESSION['lm_after_login'], $_SESSION['account_csrf']);
+            unset(
+              $_SESSION['user_id'],
+              $_SESSION['user_name'],
+              $_SESSION['user_email'],
+              $_SESSION['user_role'],
+              $_SESSION['lm_after_login'],
+              $_SESSION['account_csrf']
+            );
             session_regenerate_id(true);
             header('Location: login.php');
             exit;
@@ -88,15 +100,34 @@ try {
         }
     }
 
-    $stmt = $pdo->prepare('SELECT id, full_name, email, phone, dia_chi, phuong_xa, tinh_thanh, status, created_at FROM users WHERE id = :id LIMIT 1');
+    $stmt = $pdo->prepare(
+    'SELECT id, full_name, email, phone, dia_chi, phuong_xa,
+            tinh_thanh, status, role, created_at
+     FROM users
+     WHERE id = :id
+     LIMIT 1'
+);
     $stmt->execute(['id' => $userId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$user || ($user['status'] ?? '') !== 'active') {
-        unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_email'], $_SESSION['lm_after_login']);
-        header('Location: login.php');
-        exit;
-    }
+if (!$user || ($user['status'] ?? '') !== 'active') {
+    unset(
+        $_SESSION['user_id'],
+        $_SESSION['user_name'],
+        $_SESSION['user_email'],
+        $_SESSION['user_role'],
+        $_SESSION['lm_after_login'],
+        $_SESSION['account_csrf']
+    );
+
+    session_regenerate_id(true);
+
+    header('Location: login.php');
+    exit;
+}
+
+// Đồng bộ quyền từ database, không chỉ tin vào session cũ.
+$_SESSION['user_role'] = (string) $user['role'];
 
     if (isset($_GET['saved']) && $_GET['saved'] === '1') {
         $success = 'Thông tin của nàng đã được cập nhật thành công.';
