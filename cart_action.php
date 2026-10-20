@@ -43,6 +43,19 @@ $v = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$v) cart_reply(404, ['success'=>false,'message'=>'Biến thể không còn khả dụng.']);
 if ((int)$v['so_luong_ton'] < 1) cart_reply(409, ['success'=>false,'message'=>'Sản phẩm đã hết hàng.']);
 
+
+/* Bắt buộc đăng nhập trước khi thêm giỏ hàng hoặc mua ngay */
+if (empty($_SESSION['user_id']) || (int)$_SESSION['user_id'] < 1) {
+    $next = 'chitietsanpham.php?id=' . (int)$v['san_pham_id'];
+
+    cart_reply(401, [
+        'success' => false,
+        'message' => 'Nàng hãy đăng nhập để tiếp tục mua sắm nhé.',
+        'redirect' => 'login.php?next=' . urlencode($next)
+    ]);
+}
+
+
 $price = ($v['gia_ban'] !== null && (float)$v['gia_ban'] > 0)
     ? (float)$v['gia_ban']
     : (($v['gia_khuyen_mai'] !== null && (float)$v['gia_khuyen_mai'] > 0 && (float)$v['gia_khuyen_mai'] < (float)$v['gia_niem_yet'])

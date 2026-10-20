@@ -440,7 +440,7 @@ require_once __DIR__ . '/header.php';
                 Phí vận chuyển và thanh toán sẽ được tính ở bước tiếp theo.
                 Giá và tồn kho được kiểm tra lại khi cập nhật giỏ hàng.
             </p>
-<a href="thanhtoan.php" class="lm-btn lm-btn-primary"
+<a href="checkout.php" class="lm-btn lm-btn-primary"
    style="width:100%;display:flex;justify-content:center;
           text-decoration:none;box-sizing:border-box">
     Tiến hành thanh toán
