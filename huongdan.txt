@@ -1,4 +1,4 @@
-git clone link.git          <lấy repo(source code) về máy>
+git clone link.git          <lấy repo(source code) về máy, lúc chưa có gì >
 
 
 git pull                    <cập nhật code từ github về máy>
