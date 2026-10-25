@@ -1,0 +1,121 @@
+/* La Muse Admin — Báo cáo doanh thu */
+.revenue-page {
+  --rev-olive: #68765b;
+  --rev-olive-dark: #46533d;
+  --rev-cream: #fbf8f1;
+  --rev-line: #e9e2d6;
+  --rev-muted: #817d73;
+  color: #393b32;
+}
+.revenue-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin: 8px 0 22px;
+}
+.revenue-eyebrow {
+  margin: 0 0 8px;
+  color: var(--rev-olive);
+  font-size: 11px;
+  letter-spacing: .18em;
+  font-weight: 700;
+}
+.revenue-heading h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.15;
+}
+.revenue-subtitle { margin: 9px 0 0; color: var(--rev-muted); font-size: 14px; }
+.revenue-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--rev-line);
+  border-radius: 12px;
+}
+.revenue-filter label { display: grid; gap: 5px; font-size: 11px; color: var(--rev-muted); }
+.revenue-filter input {
+  min-height: 38px;
+  border: 1px solid var(--rev-line);
+  border-radius: 7px;
+  padding: 7px 9px;
+  color: #393b32;
+  background: #fffdf9;
+  font: inherit;
+}
+.revenue-filter .btn { min-height: 38px; white-space: nowrap; }
+.revenue-note {
+  padding: 12px 15px;
+  margin-bottom: 18px;
+  border-left: 3px solid var(--rev-olive);
+  background: var(--rev-cream);
+  color: #666459;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.revenue-note code { font-size: 12px; }
+.revenue-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.revenue-stat {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--rev-line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(58, 48, 32, .025);
+}
+.revenue-stat-primary {
+  background: var(--rev-olive-dark);
+  border-color: var(--rev-olive-dark);
+  color: #fffdf7;
+}
+.revenue-stat span { display: block; font-size: 10px; letter-spacing: .11em; line-height: 1.5; color: #77776b; font-weight: 700; }
+.revenue-stat-primary span { color: #e4e8dc; }
+.revenue-stat strong { display: block; margin: 12px 0 8px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(20px, 2vw, 29px); font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
+.revenue-stat small { display: block; color: #8c887d; font-size: 11px; line-height: 1.5; }
+.revenue-stat-primary small { color: #e4e8dc; }
+.revenue-page .revenue-panel { margin-bottom: 20px; }
+.revenue-chart-wrap { position: relative; width: 100%; height: 300px; padding: 8px 4px 0; }
+.revenue-two-columns { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 20px; align-items: stretch; }
+.revenue-pending-number { margin: 18px 0 10px; font-family: Georgia, "Times New Roman", serif; font-size: 42px; color: var(--rev-olive-dark); }
+.revenue-page .muted { line-height: 1.55; }
+.revenue-page table { width: 100%; }
+.revenue-page th { white-space: nowrap; }
+.revenue-page td { vertical-align: middle; }
+.revenue-page .number-cell { text-align: right; white-space: nowrap; }
+.revenue-status {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 20px;
+  background: #f2f0e9;
+  color: #646355;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.revenue-page .empty { text-align: center; padding: 24px 12px; color: var(--rev-muted); }
+@media (max-width: 1100px) {
+  .revenue-heading { align-items: flex-start; flex-direction: column; }
+  .revenue-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .revenue-filter { width: 100%; box-sizing: border-box; }
+  .revenue-filter label { flex: 1 1 140px; }
+  .revenue-filter input { width: 100%; box-sizing: border-box; }
+  .revenue-two-columns { grid-template-columns: minmax(0, 1fr); }
+  .revenue-chart-wrap { height: 250px; }
+}
+@media (max-width: 480px) {
+  .revenue-stats { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .revenue-stat { padding: 16px; }
+  .revenue-filter .btn { width: 100%; }
+}

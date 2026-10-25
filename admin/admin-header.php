@@ -12,6 +12,9 @@ $flashMessage = get_flash();
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($pageTitle) ?> · La Muse Admin</title>
 <link rel="stylesheet" href="admin.css">
+<?php if (($active ?? '') === 'revenue'): ?>
+<link rel="stylesheet" href="doanh-thu.css?v=2">
+<?php endif; ?>
 </head>
 <body>
 <div class="admin-shell">
@@ -26,6 +29,8 @@ $flashMessage = get_flash();
     <a class="<?= $active==='colors'?'active':'' ?>" href="colors.php">◉ <span>Màu sắc</span></a>
     <a class="<?= $active==='sizes'?'active':'' ?>" href="sizes.php">↔ <span>Kích thước (size)</span></a>
     <a class="<?= $active==='users'?'active':'' ?>" href="users.php">♙ <span>Khách hàng</span></a>
+    <a class="<?= $active==='revenue'?'active':'' ?>"
+   href="doanh-thu.php"> ↗ <span>Báo cáo doanh thu</span></a>
 </nav>
   <div class="sidebar-bottom"><span>Quản trị viên</span><a href="logout.php">Đăng xuất ↗</a></div>
 </aside>
