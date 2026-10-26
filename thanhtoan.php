@@ -1,236 +1,627 @@
 <?php
-/*
-|--------------------------------------------------------------------------
-| PHẦN 1. KHỞI TẠO VÀ CHUẨN BỊ DỮ LIỆU
-|--------------------------------------------------------------------------
-*/
 declare(strict_types=1);
 
 /*
- * session_start() dùng để mở phiên làm việc của khách hàng.
- *
- * Giỏ hàng ở cart.php đang lưu trong:
- * $_SESSION['lm_cart']
- *
- * Vì vậy, thanhtoan.php phải dùng cùng session thì mới
- * đọc được các sản phẩm khách đã thêm vào giỏ.
- *
- * Kiểm tra session trước để tránh khởi động session hai lần.
- */
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
-
-
-/*
 |--------------------------------------------------------------------------
-| PHẦN 2. HÀM BẢO VỆ DỮ LIỆU HTML
+| 1. KHỞI TẠO VÀ KIỂM TRA ĐĂNG NHẬP
 |--------------------------------------------------------------------------
 */
 
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/config.php';
+
+// Chỉ khách đã đăng nhập mới được đặt hàng.
+if (!lm_is_logged_in()) {
+    $_SESSION['lm_after_login'] = 'thanhtoan.php';
+    header('Location: login.php');
+    exit;
+}
+
+$userId = (int) $_SESSION['user_id'];
+
+if ($userId <= 0) {
+    http_response_code(403);
+    exit('Phiên đăng nhập không hợp lệ.');
+}
+
 /*
- * Hàm lm_checkout_h() dùng để hiển thị dữ liệu an toàn.
- *
- * Ví dụ:
- * Tên sản phẩm được lấy từ database hoặc session.
- * Nếu hiển thị trực tiếp mà không xử lý, dữ liệu chứa HTML
- * có thể gây lỗi giao diện hoặc tạo nguy cơ XSS.
- *
- * htmlspecialchars() chuyển các ký tự đặc biệt thành dạng
- * an toàn trước khi đưa dữ liệu vào HTML.
- *
- * Hàm này KHÔNG truy vấn database và KHÔNG thay đổi dữ liệu gốc.
- */
+|--------------------------------------------------------------------------
+| 2. CẤU HÌNH NGÂN HÀNG NHẬN TIỀN
+|--------------------------------------------------------------------------
+| VietQR sử dụng mã ngân hàng VCB của Vietcombank.
+| QR sẽ tự điền số tiền và mã đơn hàng.
+*/
+
+$bankCode = 'VCB';
+$bankAccount = '1050043200';
+$bankAccountName = 'LA MUSE';
+$shippingFeeDefault = 30000;
+
+/*
+|--------------------------------------------------------------------------
+| 3. HÀM HỖ TRỢ
+|--------------------------------------------------------------------------
+*/
+
 function lm_checkout_h($value): string
 {
     return htmlspecialchars(
-        (string)($value ?? ''),
+        (string) ($value ?? ''),
         ENT_QUOTES | ENT_SUBSTITUTE,
         'UTF-8'
     );
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| PHẦN 3. HÀM ĐỊNH DẠNG TIỀN
-|--------------------------------------------------------------------------
-*/
-
-/*
- * Hàm lm_checkout_money() chuyển số tiền thành định dạng Việt Nam.
- *
- * Ví dụ:
- * 650000  -> 650.000₫
- * 1250000 -> 1.250.000₫
- *
- * Hàm này chỉ định dạng để hiển thị, không tính lại giá sản phẩm.
- */
 function lm_checkout_money($value): string
 {
-    return number_format((float)$value, 0, ',', '.') . '₫';
+    return number_format((float) $value, 0, ',', '.') . '₫';
 }
 
+function lm_checkout_redirect_login(): never
+{
+    $_SESSION['lm_after_login'] = 'thanhtoan.php';
+    header('Location: login.php');
+    exit;
+}
 
 /*
 |--------------------------------------------------------------------------
-| PHẦN 4. LẤY DỮ LIỆU GIỎ HÀNG TỪ SESSION
+| 4. KHỞI TẠO CSRF VÀ BIẾN GIAO DIỆN
 |--------------------------------------------------------------------------
 */
 
-/*
- * Đọc giỏ hàng do cart.php lưu vào session.
- *
- * Mỗi dòng sản phẩm có thể chứa:
- * - variant_id: ID biến thể sản phẩm
- * - product_id: ID sản phẩm
- * - name: tên sản phẩm
- * - image: đường dẫn ảnh
- * - sku: mã SKU
- * - color_name: màu sắc
- * - size_name: kích thước
- * - price: đơn giá
- * - quantity: số lượng
- *
- * Nếu session chưa có giỏ hàng thì dùng mảng rỗng.
- * Kiểm tra kiểu dữ liệu để tránh lỗi khi xử lý foreach.
- *
- * Lưu ý: dữ liệu session ở đây được dùng để HIỂN THỊ.
- * Khi đặt hàng thật, máy chủ vẫn cần kiểm tra lại giá và tồn kho.
- */
+if (empty($_SESSION['lm_checkout_csrf'])) {
+    $_SESSION['lm_checkout_csrf'] = bin2hex(random_bytes(32));
+}
+
+$csrfToken = $_SESSION['lm_checkout_csrf'];
+
 $cart = $_SESSION['lm_cart'] ?? [];
 
 if (!is_array($cart)) {
     $cart = [];
 }
 
+$errorMessage = '';
+$successMessage = '';
+$order = null;
+$orderItems = [];
+$qrUrl = '';
+
+$formValues = [
+    'fullname' => '',
+    'phone' => '',
+    'email' => '',
+    'address' => '',
+    'note' => '',
+    'payment' => 'cod',
+];
 
 /*
 |--------------------------------------------------------------------------
-| PHẦN 5. TÍNH TẠM TÍNH VÀ TỔNG SỐ LƯỢNG
+| 5. XỬ LÝ TẠO ĐƠN HÀNG
 |--------------------------------------------------------------------------
 */
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $postedToken = $_POST['csrf_token'] ?? '';
+
+    if (
+        !is_string($postedToken)
+        || !hash_equals($csrfToken, $postedToken)
+    ) {
+        http_response_code(403);
+        exit('Phiên thao tác không hợp lệ. Vui lòng tải lại trang.');
+    }
+
+    $formValues['fullname'] = trim(
+        (string) ($_POST['fullname'] ?? '')
+    );
+    $formValues['phone'] = trim(
+        (string) ($_POST['phone'] ?? '')
+    );
+    $formValues['email'] = trim(
+        (string) ($_POST['email'] ?? '')
+    );
+    $formValues['address'] = trim(
+        (string) ($_POST['address'] ?? '')
+    );
+    $formValues['note'] = trim(
+        (string) ($_POST['note'] ?? '')
+    );
+    $formValues['payment'] = (string) ($_POST['payment'] ?? 'cod');
+
+    try {
+        // Kiểm tra thông tin người nhận.
+        if (
+            $formValues['fullname'] === ''
+            || mb_strlen($formValues['fullname']) > 100
+        ) {
+            throw new RuntimeException(
+                'Vui lòng nhập họ tên người nhận hợp lệ.'
+            );
+        }
+
+        if (
+            !preg_match(
+                '/^[0-9+\s().-]{7,20}$/',
+                $formValues['phone']
+            )
+        ) {
+            throw new RuntimeException(
+                'Số điện thoại không hợp lệ.'
+            );
+        }
+
+        if (
+            $formValues['address'] === ''
+            || mb_strlen($formValues['address']) > 255
+        ) {
+            throw new RuntimeException(
+                'Vui lòng nhập địa chỉ nhận hàng hợp lệ.'
+            );
+        }
+
+        if (
+            $formValues['email'] !== ''
+            && !filter_var(
+                $formValues['email'],
+                FILTER_VALIDATE_EMAIL
+            )
+        ) {
+            throw new RuntimeException(
+                'Địa chỉ email không hợp lệ.'
+            );
+        }
+
+        if (!in_array($formValues['payment'], ['cod', 'bank'], true)) {
+            throw new RuntimeException(
+                'Phương thức thanh toán không hợp lệ.'
+            );
+        }
+
+        if (
+            $formValues['note'] !== ''
+            && mb_strlen($formValues['note']) > 5000
+        ) {
+            throw new RuntimeException(
+                'Ghi chú đơn hàng quá dài.'
+            );
+        }
+
+        // Luôn đọc lại giỏ hàng từ session phía máy chủ.
+        $cart = $_SESSION['lm_cart'] ?? [];
+
+        if (!is_array($cart) || !$cart) {
+            throw new RuntimeException(
+                'Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi đặt hàng.'
+            );
+        }
+
+        $pdo->beginTransaction();
+
+        /*
+         * Đọc lại thông tin biến thể, giá và tồn kho từ database.
+         * Không tin giá do trình duyệt hoặc session gửi lên.
+         */
+        $variantStmt = $pdo->prepare("
+            SELECT
+                bt.id AS variant_id,
+                bt.sku,
+                bt.san_pham_id,
+                bt.so_luong_ton,
+                bt.gia_ban,
+                bt.mau_sac_id,
+                bt.kich_thuoc_id,
+                sp.ten_san_pham,
+                sp.ma_san_pham,
+                sp.gia_niem_yet,
+                sp.gia_khuyen_mai,
+                ms.ten_mau,
+                kt.ten_size
+            FROM bien_the_sanpham bt
+            JOIN sanpham sp
+                ON sp.id = bt.san_pham_id
+            JOIN danhmuc dm
+                ON dm.id = sp.danh_muc_id
+            JOIN mausac ms
+                ON ms.id = bt.mau_sac_id
+            JOIN kichthuoc kt
+                ON kt.id = bt.kich_thuoc_id
+            WHERE bt.id = :id
+              AND bt.trang_thai = 1
+              AND sp.trang_thai = 'dang_ban'
+              AND dm.trang_thai = 1
+              AND ms.trang_thai = 1
+              AND kt.trang_thai = 1
+            LIMIT 1
+            FOR UPDATE
+        ");
+
+        $validatedItems = [];
+        $subtotal = 0;
+        $totalQuantity = 0;
+
+        foreach ($cart as $key => $cartRow) {
+            $variantId = filter_var($key, FILTER_VALIDATE_INT);
+
+            if (
+                $variantId === false
+                || $variantId < 1
+                || !is_array($cartRow)
+            ) {
+                throw new RuntimeException(
+                    'Có sản phẩm không hợp lệ trong giỏ hàng.'
+                );
+            }
+
+            $quantity = filter_var(
+                $cartRow['quantity'] ?? null,
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $quantity === false
+                || $quantity < 1
+                || $quantity > 99
+            ) {
+                throw new RuntimeException(
+                    'Số lượng sản phẩm không hợp lệ.'
+                );
+            }
+
+            $variantStmt->execute(['id' => $variantId]);
+            $variant = $variantStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$variant) {
+                throw new RuntimeException(
+                    'Một sản phẩm đã ngừng bán hoặc không còn hợp lệ. '
+                    . 'Vui lòng kiểm tra lại giỏ hàng.'
+                );
+            }
+
+            $stock = (int) $variant['so_luong_ton'];
+
+            if ($stock < $quantity) {
+                throw new RuntimeException(
+                    'Sản phẩm '
+                    . $variant['ten_san_pham']
+                    . ' không đủ tồn kho. Hiện còn '
+                    . $stock
+                    . ' sản phẩm.'
+                );
+            }
+
+            // Tính giá theo quy tắc hiện có trong cart.php.
+            if (
+                $variant['gia_ban'] !== null
+                && (float) $variant['gia_ban'] > 0
+            ) {
+                $price = (int) round((float) $variant['gia_ban']);
+            } elseif (
+                $variant['gia_khuyen_mai'] !== null
+                && (float) $variant['gia_khuyen_mai'] > 0
+                && (float) $variant['gia_khuyen_mai']
+                    < (float) $variant['gia_niem_yet']
+            ) {
+                $price = (int) round(
+                    (float) $variant['gia_khuyen_mai']
+                );
+            } else {
+                $price = (int) round(
+                    (float) $variant['gia_niem_yet']
+                );
+            }
+
+            if ($price < 0) {
+                throw new RuntimeException(
+                    'Giá sản phẩm không hợp lệ.'
+                );
+            }
+
+            $lineTotal = $price * $quantity;
+
+            $validatedItems[] = [
+                'variant_id' => (int) $variant['variant_id'],
+                'name' => (string) $variant['ten_san_pham'],
+                'product_code' => $variant['ma_san_pham'],
+                'color' => $variant['ten_mau'],
+                'size' => $variant['ten_size'],
+                'price' => $price,
+                'quantity' => $quantity,
+                'line_total' => $lineTotal,
+            ];
+
+            $subtotal += $lineTotal;
+            $totalQuantity += $quantity;
+        }
+
+        if (!$validatedItems || $totalQuantity < 1) {
+            throw new RuntimeException(
+                'Giỏ hàng không có sản phẩm hợp lệ.'
+            );
+        }
+
+        $shippingFee = $shippingFeeDefault;
+        $discount = 0;
+        $grandTotal = $subtotal + $shippingFee - $discount;
+
+        /*
+         * Tạo mã đơn hàng riêng.
+         * Cột ma_don_hang đã có ràng buộc UNIQUE.
+         */
+        $orderCode = 'LM'
+            . date('ymd')
+            . strtoupper(bin2hex(random_bytes(3)));
+
+        /*
+         * Kiểm tra lại tài khoản vẫn tồn tại trước khi lưu đơn.
+         * Không sử dụng user_id do form gửi lên.
+         */
+        $userStmt = $pdo->prepare("
+            SELECT id
+            FROM users
+            WHERE id = :user_id
+            LIMIT 1
+        ");
+        $userStmt->execute(['user_id' => $userId]);
+
+        if (!$userStmt->fetchColumn()) {
+            throw new RuntimeException(
+                'Tài khoản không còn hợp lệ. Vui lòng đăng nhập lại.'
+            );
+        }
+
+        $paymentMethod = $formValues['payment'] === 'bank'
+            ? 'bank_transfer'
+            : 'cod';
+
+        /*
+         * Lưu đơn hàng.
+         * Đơn chuyển khoản mặc định chưa thanh toán.
+         * Đơn COD cũng chưa thanh toán trước khi giao hàng.
+         */
+        $insertOrder = $pdo->prepare("
+            INSERT INTO don_hang (
+                ma_don_hang,
+                user_id,
+                ten_nguoi_nhan,
+                so_dien_thoai,
+                email,
+                dia_chi,
+                ghi_chu,
+                tong_tien,
+                phi_van_chuyen,
+                giam_gia,
+                thanh_tien,
+                phuong_thuc_thanh_toan,
+                trang_thai_thanh_toan,
+                trang_thai_don_hang
+            ) VALUES (
+                :ma_don_hang,
+                :user_id,
+                :ten_nguoi_nhan,
+                :so_dien_thoai,
+                :email,
+                :dia_chi,
+                :ghi_chu,
+                :tong_tien,
+                :phi_van_chuyen,
+                :giam_gia,
+                :thanh_tien,
+                :phuong_thuc_thanh_toan,
+                'unpaid',
+                'pending'
+            )
+        ");
+
+        $insertOrder->execute([
+            'ma_don_hang' => $orderCode,
+            'user_id' => $userId,
+            'ten_nguoi_nhan' => $formValues['fullname'],
+            'so_dien_thoai' => $formValues['phone'],
+            'email' => $formValues['email'] !== ''
+                ? $formValues['email']
+                : null,
+            'dia_chi' => $formValues['address'],
+            'ghi_chu' => $formValues['note'] !== ''
+                ? $formValues['note']
+                : null,
+            'tong_tien' => $subtotal,
+            'phi_van_chuyen' => $shippingFee,
+            'giam_gia' => $discount,
+            'thanh_tien' => $grandTotal,
+            'phuong_thuc_thanh_toan' => $paymentMethod,
+        ]);
+
+        $orderId = (int) $pdo->lastInsertId();
+
+        /*
+         * Lưu chi tiết từng sản phẩm.
+         */
+        $insertItem = $pdo->prepare("
+            INSERT INTO chi_tiet_don_hang (
+                don_hang_id,
+                bien_the_id,
+                ten_san_pham,
+                ma_san_pham,
+                ten_mau,
+                ten_size,
+                don_gia,
+                so_luong,
+                thanh_tien
+            ) VALUES (
+                :don_hang_id,
+                :bien_the_id,
+                :ten_san_pham,
+                :ma_san_pham,
+                :ten_mau,
+                :ten_size,
+                :don_gia,
+                :so_luong,
+                :thanh_tien
+            )
+        ");
+
+        foreach ($validatedItems as $item) {
+            $insertItem->execute([
+                'don_hang_id' => $orderId,
+                'bien_the_id' => $item['variant_id'],
+                'ten_san_pham' => $item['name'],
+                'ma_san_pham' => $item['product_code'],
+                'ten_mau' => $item['color'],
+                'ten_size' => $item['size'],
+                'don_gia' => $item['price'],
+                'so_luong' => $item['quantity'],
+                'thanh_tien' => $item['line_total'],
+            ]);
+        }
+
+        // Chỉ commit khi cả đơn hàng và chi tiết đều được lưu.
+        $pdo->commit();
+
+        // Xóa giỏ hàng sau khi lưu đơn hàng thành công.
+        $_SESSION['lm_cart'] = [];
+
+        // Đổi token sau thao tác đặt hàng.
+        $_SESSION['lm_checkout_csrf'] = bin2hex(random_bytes(32));
+
+        // Chuyển hướng để tránh gửi lại form khi tải lại trang.
+        header('Location: thanhtoan.php?order=' . $orderId);
+        exit;
+
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        // Ghi lỗi kỹ thuật vào log máy chủ, không hiển thị SQL cho khách.
+        error_log(
+            '[La Muse checkout] ' . $e->getMessage()
+        );
+
+        if ($e instanceof RuntimeException) {
+            $errorMessage = $e->getMessage();
+        } else {
+            $errorMessage =
+                'Chưa thể tạo đơn hàng. Vui lòng thử lại '
+                . 'hoặc liên hệ quản trị viên.';
+        }
+    }
+}
+
 /*
- * $subtotal:
- * Tổng tiền của tất cả sản phẩm, chưa bao gồm vận chuyển.
- *
- * $totalQuantity:
- * Tổng số lượng sản phẩm khách mua.
- *
- * Ví dụ:
- * Váy A: 650.000₫ x 2 = 1.300.000₫
- * Váy B: 850.000₫ x 1 =   850.000₫
- *
- * Tạm tính = 2.150.000₫
- * Tổng số lượng = 3 sản phẩm.
- */
+|--------------------------------------------------------------------------
+| 6. ĐỌC ĐƠN HÀNG VỪA TẠO
+|--------------------------------------------------------------------------
+| Chỉ chủ sở hữu đơn hàng mới được xem thông tin và QR.
+*/
+
+$orderId = filter_input(INPUT_GET, 'order', FILTER_VALIDATE_INT);
+
+if ($orderId !== false && $orderId !== null && $orderId > 0) {
+    $orderStmt = $pdo->prepare("
+        SELECT
+            id,
+            ma_don_hang,
+            ten_nguoi_nhan,
+            tong_tien,
+            phi_van_chuyen,
+            giam_gia,
+            thanh_tien,
+            phuong_thuc_thanh_toan,
+            trang_thai_thanh_toan,
+            trang_thai_don_hang
+        FROM don_hang
+        WHERE id = :id
+          AND user_id = :user_id
+        LIMIT 1
+    ");
+
+    $orderStmt->execute([
+        'id' => $orderId,
+        'user_id' => $userId,
+    ]);
+
+    $order = $orderStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+    if ($order) {
+        $itemStmt = $pdo->prepare("
+            SELECT
+                ten_san_pham,
+                ma_san_pham,
+                ten_mau,
+                ten_size,
+                don_gia,
+                so_luong,
+                thanh_tien
+            FROM chi_tiet_don_hang
+            WHERE don_hang_id = :id
+            ORDER BY id ASC
+        ");
+
+        $itemStmt->execute(['id' => $orderId]);
+        $orderItems = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Chỉ tạo QR cho đơn chuyển khoản chưa được xác nhận thanh toán.
+        if (
+            $order['phuong_thuc_thanh_toan'] === 'bank_transfer'
+            && $order['trang_thai_thanh_toan'] === 'unpaid'
+        ) {
+            $qrParams = http_build_query([
+                'amount' => (int) $order['thanh_tien'],
+                'addInfo' => $order['ma_don_hang'],
+                'accountName' => $bankAccountName,
+            ]);
+
+            $qrUrl = 'https://img.vietqr.io/image/'
+                . rawurlencode($bankCode)
+                . '-'
+                . rawurlencode($bankAccount)
+                . '-compact2.png?'
+                . $qrParams;
+        }
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| 7. TÍNH DỮ LIỆU GIỎ HÀNG ĐỂ HIỂN THỊ
+|--------------------------------------------------------------------------
+*/
+
+$cart = $_SESSION['lm_cart'] ?? [];
+
+if (!is_array($cart)) {
+    $cart = [];
+}
+
 $subtotal = 0;
 $totalQuantity = 0;
 
-
-/*
- * Duyệt từng dòng trong giỏ hàng để tính tiền.
- */
 foreach ($cart as $row) {
-
-    // Bỏ qua dòng không có cấu trúc dữ liệu hợp lệ.
     if (!is_array($row)) {
         continue;
     }
 
-    /*
-     * Đọc đơn giá và số lượng từ session.
-     *
-     * ?? 0 có nghĩa là nếu thiếu trường dữ liệu
-     * thì sử dụng giá trị mặc định bằng 0.
-     *
-     * max() ngăn giá trị âm làm sai phép tính.
-     */
-    $price = max(0, (float)($row['price'] ?? 0));
+    $price = max(0, (float) ($row['price'] ?? 0));
+    $quantity = max(0, (int) ($row['quantity'] ?? 0));
 
-    $quantity = max(0, (int)($row['quantity'] ?? 0));
-
-
-    /*
-     * Thành tiền của một dòng = đơn giá x số lượng.
-     * Cộng dồn vào tổng tiền sản phẩm.
-     */
     $subtotal += $price * $quantity;
-
-
-    /*
-     * Cộng số lượng của dòng hiện tại vào tổng số lượng.
-     */
     $totalQuantity += $quantity;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| PHẦN 6. TÍNH PHÍ VẬN CHUYỂN VÀ TỔNG THANH TOÁN
-|--------------------------------------------------------------------------
-*/
-
-/*
- * Quy tắc hiện tại:
- * - Giỏ có sản phẩm: phí vận chuyển 30.000₫.
- * - Giỏ không có sản phẩm: phí vận chuyển bằng 0₫.
- *
- * Đây là mức phí cố định minh họa theo giao diện hiện tại.
- * Nếu La Muse có chính sách miễn phí vận chuyển hoặc
- * phí theo khu vực, cần thay đổi quy tắc tại đây.
- */
-$shippingFee = $totalQuantity > 0 ? 30000 : 0;
-
-
-/*
- * Tổng thanh toán = tạm tính + phí vận chuyển.
- */
+$shippingFee = $totalQuantity > 0 ? $shippingFeeDefault : 0;
 $grandTotal = $subtotal + $shippingFee;
 
+require_once __DIR__ . '/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="vi">
-
-<head>
-    <meta charset="UTF-8">
-
-    <!-- Giúp giao diện hiển thị phù hợp với điện thoại và máy tính -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Thanh toán | La Muse</title>
-
-    <!-- Kết nối Google Fonts để giữ font chữ của La Muse -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
-        rel="stylesheet"
-    >
-
-    <!-- Nạp CSS riêng của trang thanh toán -->
-    <link rel="stylesheet" href="thanhtoan.css">
-</head>
-
-<body>
+<link rel="stylesheet" href="thanhtoan.css">
 
 <main class="checkout-page">
 
-    <!--
-    ----------------------------------------------------------------------
-    PHẦN 7. TIÊU ĐỀ TRANG THANH TOÁN
-    ----------------------------------------------------------------------
-
-    Đây là phần tiêu đề ở phía trên cùng của trang.
-    Các nội dung trong phần này đang được viết cố định trong HTML.
-    Không lấy dữ liệu từ database.
-    -->
-
     <section class="checkout-heading">
-
         <p class="checkout-eyebrow">
             LA MUSE — TISSEUSE DE RÊVES
         </p>
@@ -241,548 +632,449 @@ $grandTotal = $subtotal + $shippingFee;
             Hoàn tất lựa chọn tinh tế dành riêng cho quý cô.
         </p>
 
-        <!-- Nhấn vào để quay lại giỏ hàng và sửa số lượng -->
         <a href="cart.php" class="back-to-cart">
             ← Quay lại giỏ hàng
         </a>
-
     </section>
 
+    <?php if ($errorMessage !== ''): ?>
+        <div class="checkout-alert" role="alert">
+            <?= lm_checkout_h($errorMessage) ?>
+        </div>
+    <?php endif; ?>
 
-    <!-- Chia trang thành cột thông tin nhận hàng và cột đơn hàng -->
     <div class="checkout-layout">
 
+        <?php if ($order): ?>
 
-        <!--
-        ------------------------------------------------------------------
-        PHẦN 8. FORM THÔNG TIN NHẬN HÀNG
-        ------------------------------------------------------------------
+            <section class="checkout-form">
+                <h2>Đơn hàng đã được tạo</h2>
 
-        Khách nhập thông tin giao hàng tại đây.
-
-        Lưu ý:
-        Form hiện sử dụng action="#", nghĩa là chưa kết nối đến
-        một đoạn PHP xử lý và lưu đơn hàng hoàn chỉnh.
-
-        required giúp trình duyệt kiểm tra một số trường bắt buộc,
-        nhưng không thay thế việc kiểm tra dữ liệu ở máy chủ.
-        -->
-
-        <section class="checkout-form">
-
-            <h2>Thông tin nhận hàng</h2>
-
-            <form action="#" method="post">
-
-                <!-- Họ tên người nhận -->
-                <div class="form-group">
-
-                    <label for="fullname">Họ và tên</label>
-
-                    <input
-                        type="text"
-                        id="fullname"
-                        name="fullname"
-                        placeholder="Nhập họ và tên"
-                        autocomplete="name"
-                        required
-                    >
-
-                </div>
-
-
-                <!-- Số điện thoại và email -->
-                <div class="form-row">
-
-                    <div class="form-group">
-
-                        <label for="phone">Số điện thoại</label>
-
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            placeholder="Nhập số điện thoại"
-                            autocomplete="tel"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label for="email">Email</label>
-
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            placeholder="Nhập email"
-                            autocomplete="email"
-                        >
-
-                    </div>
-
-                </div>
-
-
-                <!-- Địa chỉ giao hàng -->
-                <div class="form-group">
-
-                    <label for="address">Địa chỉ nhận hàng</label>
-
-                    <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        placeholder="Số nhà, tên đường..."
-                        autocomplete="street-address"
-                        required
-                    >
-
-                </div>
-
-
-                <!-- Ghi chú thêm của khách hàng -->
-                <div class="form-group">
-
-                    <label for="note">Ghi chú đơn hàng</label>
-
-                    <textarea
-                        id="note"
-                        name="note"
-                        rows="3"
-                        placeholder="Lời nhắn dành cho La Muse (nếu có)"
-                    ></textarea>
-
-                </div>
-
-
-                <!--
-                Phần lựa chọn vận chuyển.
-                Hiện chỉ có một lựa chọn giao hàng tiêu chuẩn.
-                Chưa có xử lý thay đổi phí vận chuyển.
-                -->
-
-                <h2 class="section-heading">
-                    Phương thức vận chuyển
-                </h2>
-
-                <label class="option-card">
-
-                    <input
-                        type="radio"
-                        name="shipping"
-                        value="standard"
-                        checked
-                    >
-
-                    <span>
-                        <strong>Giao hàng tiêu chuẩn</strong>
-
-                        <small>
-                            Ngày giao dự kiến từ 3-5 ngày
-                        </small>
-                    </span>
-
-                </label>
-
-
-                <!--
-                Phần lựa chọn phương thức thanh toán.
-
-                COD: thanh toán khi nhận hàng.
-                Bank: chuyển khoản ngân hàng.
-
-                Các radio này hiện chỉ ghi nhận lựa chọn trên form.
-                Chưa thực hiện thu tiền hoặc xác nhận chuyển khoản.
-                -->
-
-                <h2 class="section-heading">
-                    Phương thức thanh toán
-                </h2>
-
-                <label class="option-card">
-
-                    <input
-                        type="radio"
-                        name="payment"
-                        value="cod"
-                        checked
-                    >
-
-                    <span>
-                        <strong>
-                            Thanh toán khi nhận hàng (COD)
-                        </strong>
-
-                        <small>
-                            Thanh toán sau khi nhận sản phẩm
-                        </small>
-                    </span>
-
-                </label>
-
-
-                <label class="option-card">
-
-                    <input
-                        type="radio"
-                        name="payment"
-                        value="bank"
-                    >
-
-                    <span class="option-content">
-
-                        <strong>
-                            Chuyển khoản qua tài khoản ngân hàng
-                        </strong>
-
-                        <small>
-                            Thanh toán qua tài khoản ngân hàng
-                        </small>
-
-                    </span>
-
-                </label>
-
-
-                <!--
-                Nút gửi thông tin đặt hàng.
-
-                Nếu giỏ hàng rỗng thì nút bị vô hiệu hóa.
-                Nếu giỏ hàng có sản phẩm thì nút có thể được nhấn.
-
-                Tuy nhiên, form chưa có xử lý lưu đơn hàng.
-                -->
-
-                <button
-                    type="submit"
-                    class="checkout-button"
-                    <?= $totalQuantity === 0 ? 'disabled' : '' ?>
-                >
-                    XÁC NHẬN ĐẶT HÀNG
-                </button>
-
-            </form>
-
-        </section>
-
-
-
-        <!--
-        ------------------------------------------------------------------
-        PHẦN 9. TÓM TẮT ĐƠN HÀNG
-        ------------------------------------------------------------------
-
-        Đây chính là phần được khoanh đỏ trong ảnh bạn gửi.
-
-        Khác với code cũ chỉ có "Tên sản phẩm", "Giá tiền",
-        phần này sử dụng PHP để lấy dữ liệu trong session.
-
-        Khi giỏ hàng thay đổi và khách mở lại trang thanh toán,
-        PHP sẽ đọc dữ liệu session hiện tại để hiển thị.
-        -->
-
-        <aside class="order-summary">
-
-            <!-- Tiêu đề của khung đơn hàng -->
-            <h2>Đơn hàng của quý cô</h2>
-
-
-            <!--
-            PHẦN 9.1. KIỂM TRA GIỎ HÀNG CÓ SẢN PHẨM KHÔNG
-
-            Nếu tổng số lượng bằng 0:
-            - Hiển thị thông báo giỏ hàng trống.
-            - Không hiển thị bảng tính tiền.
-            - Nút xác nhận đặt hàng cũng bị vô hiệu hóa.
-            -->
-
-            <?php if ($totalQuantity === 0): ?>
-
-                <div class="summary-empty">
-
-                    <p>
-                        Giỏ hàng của nàng vẫn chưa có sản phẩm.
-                    </p>
-
-                    <a href="cart.php" class="back-to-cart">
-                        Quay lại giỏ hàng
-                    </a>
-
-                </div>
-
-
-            <?php else: ?>
-
-
-                <!--
-                PHẦN 9.2. HIỂN THỊ TỪNG SẢN PHẨM
-
-                foreach duyệt qua từng dòng trong giỏ hàng.
-
-                Nếu khách mua 3 sản phẩm khác nhau, vòng lặp sẽ
-                tạo ra 3 khối thông tin sản phẩm.
-
-                $key là khóa của dòng giỏ hàng.
-                $row là mảng thông tin của sản phẩm hiện tại.
-                -->
-
-                <?php foreach ($cart as $key => $row): ?>
-
-                    <?php
-
-                    // Bỏ qua dòng không chứa mảng dữ liệu hợp lệ.
-                    if (!is_array($row)) {
-                        continue;
-                    }
-
-
-                    /*
-                     * Lấy dữ liệu của sản phẩm hiện tại.
-                     *
-                     * Các tên trường phải khớp với cart.php.
-                     * Nếu trường nào không tồn tại thì dùng giá trị
-                     * mặc định để tránh lỗi PHP.
-                     */
-
-                    $name = (string)(
-                        $row['name'] ?? 'Sản phẩm La Muse'
-                    );
-
-                    $image = trim(
-                        (string)($row['image'] ?? '')
-                    );
-
-                    $sku = (string)($row['sku'] ?? '');
-
-                    $color = (string)(
-                        $row['color_name'] ?? ''
-                    );
-
-                    $size = (string)(
-                        $row['size_name'] ?? ''
-                    );
-
-                    $price = max(
-                        0,
-                        (float)($row['price'] ?? 0)
-                    );
-
-                    $quantity = max(
-                        0,
-                        (int)($row['quantity'] ?? 0)
-                    );
-
-
-                    /*
-                     * Tính thành tiền của sản phẩm hiện tại.
-                     *
-                     * Ví dụ:
-                     * Đơn giá 650.000₫
-                     * Số lượng 2
-                     * Thành tiền 1.300.000₫
-                     */
-                    $lineTotal = $price * $quantity;
-
-                    ?>
-
-
-                    <!-- Một khối thông tin của một sản phẩm -->
-                    <div class="summary-product">
-
-
-                        <!--
-                        PHẦN 9.3. HIỂN THỊ ẢNH SẢN PHẨM
-
-                        Nếu session có đường dẫn ảnh thì hiển thị ảnh.
-                        Nếu không có đường dẫn ảnh thì hiện chữ LM.
-
-                        Đường dẫn ảnh được sử dụng nguyên trạng từ giỏ
-                        hàng, không tự nối thêm đường dẫn thư mục.
-                        -->
-
-                        <?php if ($image !== ''): ?>
-
-                            <img
-                                src="<?= lm_checkout_h($image) ?>"
-                                alt="<?= lm_checkout_h($name) ?>"
-                                class="summary-product-image"
-                                loading="lazy"
-                                style="width:76px;height:92px;object-fit:cover;flex-shrink:0;"
-                            >
-
-                        <?php else: ?>
-
-                            <div class="product-placeholder">
-                                LM
-                            </div>
-
-                        <?php endif; ?>
-
-
-                        <!--
-                        PHẦN 9.4. HIỂN THỊ THÔNG TIN SẢN PHẨM
-                        -->
-
-                        <div class="product-info">
-
-
-                            <!-- Tên sản phẩm lấy từ $row['name'] -->
-                            <h3>
-                                <?= lm_checkout_h($name) ?>
-                            </h3>
-
-
-                            <!-- Chỉ hiển thị mã SKU nếu có -->
-                            <?php if ($sku !== ''): ?>
-
-                                <p>
-                                    Mã: <?= lm_checkout_h($sku) ?>
-                                </p>
-
-                            <?php endif; ?>
-
-
-                            <!-- Hiển thị màu sắc và kích thước -->
-                            <?php if ($color !== '' || $size !== ''): ?>
-
-                                <p>
-
-                                    <?php if ($color !== ''): ?>
-                                        Màu:
-                                        <?= lm_checkout_h($color) ?>
-                                    <?php endif; ?>
-
-                                    <?php if ($color !== '' && $size !== ''): ?>
-                                        ·
-                                    <?php endif; ?>
-
-                                    <?php if ($size !== ''): ?>
-                                        Size:
-                                        <?= lm_checkout_h($size) ?>
-                                    <?php endif; ?>
-
-                                </p>
-
-                            <?php endif; ?>
-
-
-                            <!-- Số lượng khách đã chọn -->
-                            <p>
-                                Số lượng: <?= $quantity ?>
-                            </p>
-
-
-                            <!-- Đơn giá của một sản phẩm -->
-                            <span>
-                                <?= lm_checkout_money($price) ?>
-                            </span>
-
-
-                            <!--
-                            Thành tiền của riêng dòng sản phẩm.
-                            Không phải tổng tiền của cả đơn hàng.
-                            -->
-
-                            <p class="summary-line-total">
-
-                                Thành tiền:
-
-                                <strong>
-                                    <?= lm_checkout_money($lineTotal) ?>
-                                </strong>
-
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                <?php endforeach; ?>
-
-
-                <!-- Đường kẻ ngăn cách danh sách sản phẩm và tiền -->
-                <div class="summary-divider"></div>
-
-
-                <!--
-                PHẦN 9.5. HIỂN THỊ TẠM TÍNH
-
-                $subtotal đã được tính ở PHẦN 5.
-
-                Đây là tổng thành tiền của tất cả sản phẩm,
-                chưa bao gồm phí vận chuyển.
-                -->
-
-                <div class="summary-row">
-
-                    <span>
-                        Tạm tính (<?= $totalQuantity ?> sản phẩm)
-                    </span>
-
-                    <span>
-                        <?= lm_checkout_money($subtotal) ?>
-                    </span>
-
-                </div>
-
-
-                <!--
-                PHẦN 9.6. HIỂN THỊ PHÍ VẬN CHUYỂN
-
-                Giá trị lấy từ biến $shippingFee ở PHẦN 6.
-                Không cần viết cố định 30.000₫ trong HTML nữa.
-                -->
-
-                <div class="summary-row">
-
-                    <span>Phí vận chuyển</span>
-
-                    <span>
-                        <?= lm_checkout_money($shippingFee) ?>
-                    </span>
-
-                </div>
-
-
-                <!-- Đường kẻ phía trên tổng thanh toán -->
-                <div class="summary-divider"></div>
-
-
-                <!--
-                PHẦN 9.7. TỔNG THANH TOÁN
-
-                $grandTotal = $subtotal + $shippingFee.
-
-                Đây là tổng tiền khách cần thanh toán theo
-                quy tắc tính phí hiện tại của website.
-                -->
-
-                <div class="summary-row total-row">
-
-                    <strong>Tổng thanh toán</strong>
-
+                <p>
+                    Mã đơn hàng:
                     <strong>
-                        <?= lm_checkout_money($grandTotal) ?>
+                        <?= lm_checkout_h($order['ma_don_hang']) ?>
                     </strong>
-
-                </div>
-
-
-                <!-- Lời cảm ơn cố định của thương hiệu -->
-                <p class="summary-note">
-                    Cảm ơn nàng đã lựa chọn La Muse.
                 </p>
 
+                <?php if (
+                    $order['phuong_thuc_thanh_toan'] === 'bank_transfer'
+                    && $order['trang_thai_thanh_toan'] === 'unpaid'
+                ): ?>
 
-            <?php endif; ?>
+                    <h3>Quét mã QR Vietcombank để chuyển khoản</h3>
 
-        </aside>
+                    <p>
+                        Vui lòng chuyển đúng số tiền và giữ nguyên
+                        nội dung chuyển khoản là mã đơn hàng.
+                    </p>
+
+                    <div class="payment-qr">
+                        <img
+                            src="<?= lm_checkout_h($qrUrl) ?>"
+                            alt="Mã QR thanh toán đơn hàng La Muse"
+                            style="display:block;width:100%;max-width:300px;height:auto;margin:20px auto;"
+                        >
+
+                        <p>
+                            Ngân hàng:
+                            <strong>Vietcombank</strong>
+                        </p>
+
+                        <p>
+                            Chủ tài khoản:
+                            <strong>LA MUSE</strong>
+                        </p>
+
+                        <p>
+                            Số tài khoản:
+                            <strong><?= lm_checkout_h($bankAccount) ?></strong>
+                            <button
+                                type="button"
+                                onclick="navigator.clipboard.writeText('<?= lm_checkout_h($bankAccount) ?>')"
+                            >
+                                Sao chép
+                            </button>
+                        </p>
+
+                        <p>
+                            Số tiền cần chuyển:
+                            <strong>
+                                <?= lm_checkout_money($order['thanh_tien']) ?>
+                            </strong>
+                            <button
+                                type="button"
+                                onclick="navigator.clipboard.writeText('<?= (int) $order['thanh_tien'] ?>')"
+                            >
+                                Sao chép
+                            </button>
+                        </p>
+
+                        <p>
+                            Nội dung chuyển khoản:
+                            <strong>
+                                <?= lm_checkout_h($order['ma_don_hang']) ?>
+                            </strong>
+                            <button
+                                type="button"
+                                onclick="navigator.clipboard.writeText('<?= lm_checkout_h($order['ma_don_hang']) ?>')"
+                            >
+                                Sao chép
+                            </button>
+                        </p>
+
+                        <p>
+                            <strong>Trạng thái:</strong>
+                            Chờ quản trị viên xác nhận thanh toán.
+                        </p>
+                    </div>
+
+                <?php elseif (
+                    $order['trang_thai_thanh_toan'] === 'paid'
+                ): ?>
+
+                    <p>
+                        Đơn hàng đã được xác nhận thanh toán.
+                    </p>
+
+                <?php elseif (
+                    $order['phuong_thuc_thanh_toan'] === 'cod'
+                ): ?>
+
+                    <p>
+                        La Muse đã tiếp nhận đơn hàng COD.
+                        Quý khách thanh toán khi nhận hàng.
+                    </p>
+
+                <?php else: ?>
+
+                    <p>
+                        Trạng thái thanh toán:
+                        <?= lm_checkout_h($order['trang_thai_thanh_toan']) ?>
+                    </p>
+
+                <?php endif; ?>
+
+                <h3>Chi tiết sản phẩm</h3>
+
+                <?php foreach ($orderItems as $item): ?>
+                    <div class="summary-product">
+                        <div class="product-info">
+                            <h3>
+                                <?= lm_checkout_h($item['ten_san_pham']) ?>
+                            </h3>
+
+                            <p>
+                                Mã:
+                                <?= lm_checkout_h($item['ma_san_pham'] ?? '') ?>
+                            </p>
+
+                            <p>
+                                Màu: <?= lm_checkout_h($item['ten_mau'] ?? '') ?>
+                                · Size: <?= lm_checkout_h($item['ten_size'] ?? '') ?>
+                            </p>
+
+                            <p>
+                                Số lượng: <?= (int) $item['so_luong'] ?>
+                            </p>
+
+                            <strong>
+                                <?= lm_checkout_money($item['thanh_tien']) ?>
+                            </strong>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+
+                <p>
+                    <a href="index.php" class="back-to-cart">
+                        Tiếp tục mua sắm
+                    </a>
+                </p>
+            </section>
+
+            <aside class="order-summary">
+                <h2>Đơn hàng của quý cô</h2>
+
+                <div class="summary-row">
+                    <span>Tạm tính</span>
+                    <span>
+                        <?= lm_checkout_money($order['tong_tien']) ?>
+                    </span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Phí vận chuyển</span>
+                    <span>
+                        <?= lm_checkout_money($order['phi_van_chuyen']) ?>
+                    </span>
+                </div>
+
+                <div class="summary-row">
+                    <span>Giảm giá</span>
+                    <span>
+                        <?= lm_checkout_money($order['giam_gia']) ?>
+                    </span>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-row total-row">
+                    <strong>Tổng thanh toán</strong>
+                    <strong>
+                        <?= lm_checkout_money($order['thanh_tien']) ?>
+                    </strong>
+                </div>
+
+                <p>
+                    Mã đơn hàng:
+                    <strong>
+                        <?= lm_checkout_h($order['ma_don_hang']) ?>
+                    </strong>
+                </p>
+            </aside>
+
+        <?php else: ?>
+
+            <section class="checkout-form">
+                <h2>Thông tin nhận hàng</h2>
+
+                <form action="thanhtoan.php" method="post">
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?= lm_checkout_h($csrfToken) ?>"
+                    >
+
+                    <div class="form-group">
+                        <label for="fullname">Họ và tên</label>
+                        <input
+                            type="text"
+                            id="fullname"
+                            name="fullname"
+                            maxlength="100"
+                            placeholder="Nhập họ và tên"
+                            autocomplete="name"
+                            value="<?= lm_checkout_h($formValues['fullname']) ?>"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Số điện thoại</label>
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                maxlength="20"
+                                placeholder="Nhập số điện thoại"
+                                autocomplete="tel"
+                                value="<?= lm_checkout_h($formValues['phone']) ?>"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                maxlength="255"
+                                placeholder="Nhập email"
+                                autocomplete="email"
+                                value="<?= lm_checkout_h($formValues['email']) ?>"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Địa chỉ nhận hàng</label>
+                        <input
+                            type="text"
+                            id="address"
+                            name="address"
+                            maxlength="255"
+                            placeholder="Số nhà, tên đường..."
+                            autocomplete="street-address"
+                            value="<?= lm_checkout_h($formValues['address']) ?>"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="note">Ghi chú đơn hàng</label>
+                        <textarea
+                            id="note"
+                            name="note"
+                            rows="3"
+                            maxlength="5000"
+                            placeholder="Lời nhắn dành cho La Muse (nếu có)"
+                        ><?= lm_checkout_h($formValues['note']) ?></textarea>
+                    </div>
+
+                    <h2 class="section-heading">
+                        Phương thức vận chuyển
+                    </h2>
+
+                    <label class="option-card">
+                        <input
+                            type="radio"
+                            name="shipping"
+                            value="standard"
+                            checked
+                        >
+
+                        <span>
+                            <strong>Giao hàng tiêu chuẩn</strong>
+                            <small>Ngày giao dự kiến từ 3-5 ngày</small>
+                        </span>
+                    </label>
+
+                    <h2 class="section-heading">
+                        Phương thức thanh toán
+                    </h2>
+
+                    <label class="option-card">
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="cod"
+                            <?= $formValues['payment'] === 'cod' ? 'checked' : '' ?>
+                        >
+
+                        <span>
+                            <strong>Thanh toán khi nhận hàng (COD)</strong>
+                            <small>Thanh toán sau khi nhận hàng</small>
+                        </span>
+                    </label>
+
+                    <label class="option-card">
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="bank"
+                            <?= $formValues['payment'] === 'bank' ? 'checked' : '' ?>
+                        >
+
+                        <span class="option-content">
+                            <strong>Chuyển khoản qua tài khoản ngân hàng</strong>
+                            <small>
+                                Quét QR Vietcombank và chuyển đúng số tiền
+                                cùng nội dung mã đơn hàng.
+                            </small>
+                        </span>
+                    </label>
+
+                    <button
+                        type="submit"
+                        class="checkout-button"
+                        <?= $totalQuantity === 0 ? 'disabled' : '' ?>
+                    >
+                        XÁC NHẬN ĐẶT HÀNG
+                    </button>
+                </form>
+            </section>
+
+            <aside class="order-summary">
+                <h2>Đơn hàng của quý cô</h2>
+
+                <?php if ($totalQuantity === 0): ?>
+
+                    <div class="summary-empty">
+                        <p>Giỏ hàng của nàng vẫn chưa có sản phẩm.</p>
+
+                        <a href="cart.php" class="back-to-cart">
+                            Quay lại giỏ hàng
+                        </a>
+                    </div>
+
+                <?php else: ?>
+
+                    <?php foreach ($cart as $key => $row): ?>
+                        <?php
+                        if (!is_array($row)) {
+                            continue;
+                        }
+
+                        $name = (string) ($row['name'] ?? 'Sản phẩm La Muse');
+                        $image = trim((string) ($row['image'] ?? ''));
+                        $sku = (string) ($row['sku'] ?? '');
+                        $color = (string) ($row['color_name'] ?? '');
+                        $size = (string) ($row['size_name'] ?? '');
+                        $price = max(0, (float) ($row['price'] ?? 0));
+                        $quantity = max(0, (int) ($row['quantity'] ?? 0));
+                        $lineTotal = $price * $quantity;
+                        ?>
+
+                        <div class="summary-product">
+                            <?php if ($image !== ''): ?>
+                                <img
+                                    src="<?= lm_checkout_h($image) ?>"
+                                    alt="<?= lm_checkout_h($name) ?>"
+                                    class="summary-product-image"
+                                    loading="lazy"
+                                    style="width:76px;height:92px;object-fit:cover;flex-shrink:0;"
+                                >
+                            <?php else: ?>
+                                <div class="product-placeholder">LM</div>
+                            <?php endif; ?>
+
+                            <div class="product-info">
+                                <h3><?= lm_checkout_h($name) ?></h3>
+
+                                <?php if ($sku !== ''): ?>
+                                    <p>Mã: <?= lm_checkout_h($sku) ?></p>
+                                <?php endif; ?>
+
+                                <p>
+                                    Màu: <?= lm_checkout_h($color) ?>
+                                    · Size: <?= lm_checkout_h($size) ?>
+                                </p>
+
+                                <p>Số lượng: <?= $quantity ?></p>
+
+                                <span><?= lm_checkout_money($price) ?></span>
+
+                                <p class="summary-line-total">
+                                    Thành tiền:
+                                    <strong>
+                                        <?= lm_checkout_money($lineTotal) ?>
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-row">
+                        <span>Tạm tính (<?= $totalQuantity ?> sản phẩm)</span>
+                        <span><?= lm_checkout_money($subtotal) ?></span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Phí vận chuyển</span>
+                        <span><?= lm_checkout_money($shippingFee) ?></span>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-row total-row">
+                        <strong>Tổng thanh toán</strong>
+                        <strong><?= lm_checkout_money($grandTotal) ?></strong>
+                    </div>
+
+                    <p class="summary-note">
+                        Cảm ơn nàng đã lựa chọn La Muse.
+                    </p>
+
+                <?php endif; ?>
+            </aside>
+
+        <?php endif; ?>
 
     </div>
-
 </main>
 
 </body>
