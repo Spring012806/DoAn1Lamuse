@@ -1,36 +1,3 @@
-/* =========================================================
-   1. KHAI BÁO BIẾN MÀU SẮC
-   Phong cách La Muse: xanh lá, kem và trắng ngà
-========================================================= */
-
-:root {
-  --green-dark: #253c22;
-  --green-main: #306d29;
-  --green-deep: #0d530e;
-
-  --cream: #fbf5dd;
-  --ivory: #fffdf9;
-  --sage: #e7e1b1;
-
-  --text-main: #253c22;
-  --text-muted: #77796c;
-  --border-color: #e7e2d5;
-}
-
-/* =========================================================
-   2. THIẾT LẬP CHUNG CHO TOÀN BỘ TRANG
-========================================================= */
-
-/* Tính cả padding và border trong kích thước phần tử */
-* {
-  box-sizing: border-box;
-}
-
-/* Cuộn trang mượt mà */
-html {
-  scroll-behavior: smooth;
-}
-
 /* NỀN GRADIENT CHUYỂN ĐỘNG */
 body {
   min-height: 100vh;
@@ -71,6 +38,39 @@ body {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* =========================================================
+   1. KHAI BÁO BIẾN MÀU SẮC
+   Phong cách La Muse: xanh lá, kem và trắng ngà
+========================================================= */
+
+:root {
+  --green-dark: #253c22;
+  --green-main: #306d29;
+  --green-deep: #0d530e;
+
+  --cream: #fbf5dd;
+  --ivory: #fffdf9;
+  --sage: #e7e1b1;
+
+  --text-main: #253c22;
+  --text-muted: #77796c;
+  --border-color: #e7e2d5;
+}
+
+/* =========================================================
+   2. THIẾT LẬP CHUNG CHO TOÀN BỘ TRANG
+========================================================= */
+
+/* Tính cả padding và border trong kích thước phần tử */
+* {
+  box-sizing: border-box;
+}
+
+/* Cuộn trang mượt mà */
+html {
+  scroll-behavior: smooth;
 }
 
 /* =========================================================

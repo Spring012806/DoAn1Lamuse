@@ -693,7 +693,7 @@ require_once __DIR__ . '/header.php';
                                 type="button"
                                 onclick="navigator.clipboard.writeText('<?= lm_checkout_h($bankAccount) ?>')"
                             >
-                                Sao chép
+                               Sao chép
                             </button>
                         </p>
 
@@ -702,12 +702,7 @@ require_once __DIR__ . '/header.php';
                             <strong>
                                 <?= lm_checkout_money($order['thanh_tien']) ?>
                             </strong>
-                            <button
-                                type="button"
-                                onclick="navigator.clipboard.writeText('<?= (int) $order['thanh_tien'] ?>')"
-                            >
-                                Sao chép
-                            </button>
+                            
                         </p>
 
                         <p>
@@ -715,12 +710,7 @@ require_once __DIR__ . '/header.php';
                             <strong>
                                 <?= lm_checkout_h($order['ma_don_hang']) ?>
                             </strong>
-                            <button
-                                type="button"
-                                onclick="navigator.clipboard.writeText('<?= lm_checkout_h($order['ma_don_hang']) ?>')"
-                            >
-                                Sao chép
-                            </button>
+                            
                         </p>
 
                         <p>
