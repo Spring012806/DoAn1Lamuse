@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
 require_admin();
+require_once dirname(__DIR__) . '/notification-helper.php';
 
 $pageTitle = 'Quản lý đơn hàng';
 $active = 'orders';
@@ -53,10 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($orderId < 1 || !in_array($newStatus, $orderStatuses, true) || !in_array($newPayment, $paymentStatuses, true)) {
             $error = 'Dữ liệu cập nhật không hợp lệ.';
         } else {
-            $check = $pdo->prepare('SELECT id FROM don_hang WHERE id = :id');
+            $check = $pdo->prepare("
+                SELECT
+                    id,
+                    user_id,
+                    ma_don_hang,
+                    trang_thai_don_hang,
+                    trang_thai_thanh_toan
+                FROM don_hang
+                WHERE id = :id
+                LIMIT 1
+            ");
             $check->execute(['id' => $orderId]);
+            $existingOrder = $check->fetch();
 
-            if (!$check->fetchColumn()) {
+            if (!$existingOrder) {
                 $error = 'Không tìm thấy đơn hàng cần cập nhật.';
             } else {
                 $update = $pdo->prepare(
@@ -65,11 +77,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          trang_thai_thanh_toan = :payment_status
                      WHERE id = :id'
                 );
-                $update->execute([
-                    'order_status' => $newStatus,
-                    'payment_status' => $newPayment,
-                    'id' => $orderId,
-                ]);
+
+$update->execute([
+    'order_status' => $newStatus,
+    'payment_status' => $newPayment,
+    'id' => $orderId,
+]);
+
+$oldOrderStatus = (string) $existingOrder['trang_thai_don_hang'];
+$oldPaymentStatus = (string) $existingOrder['trang_thai_thanh_toan'];
+
+$changes = [];
+
+if ($oldOrderStatus !== $newStatus) {
+    $changes[] = 'Trạng thái đơn hàng: '
+        . order_status_label($oldOrderStatus)
+        . ' → '
+        . order_status_label($newStatus);
+}
+
+if ($oldPaymentStatus !== $newPayment) {
+    $changes[] = 'Thanh toán: '
+        . payment_status_label($oldPaymentStatus)
+        . ' → '
+        . payment_status_label($newPayment);
+}
+
+// Chỉ thông báo khi trạng thái đơn hàng hoặc thanh toán thực sự thay đổi.
+if ($changes) {
+    $statusNoticeTitles = [
+        'confirmed' => 'Đơn hàng được xác nhận',
+        'shipping' => 'Đơn hàng đang giao',
+        'delivered' => 'Đơn hàng giao thành công',
+        'cancelled' => 'Đơn hàng bị hủy',
+        'pending' => 'Đơn hàng đang chờ xác nhận',
+    ];
+
+    $noticeTitle = $oldOrderStatus !== $newStatus
+        ? ($statusNoticeTitles[$newStatus] ?? 'Cập nhật đơn hàng')
+        : 'Cập nhật thanh toán đơn hàng';
+
+    lm_create_notification(
+        $pdo,
+        (int) $existingOrder['user_id'],
+        'customer',
+        $noticeTitle . ' · ' . $existingOrder['ma_don_hang'],
+        implode('. ', $changes) . '.',
+        'order_update',
+        'thanhtoan.php?order=' . $orderId
+    );
+}
+
 
                 header('Location: orders.php?updated=1' . ($viewId ? '&view=' . $viewId : ''));
                 exit;

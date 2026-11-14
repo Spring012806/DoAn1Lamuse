@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 require_admin();
+require_once dirname(__DIR__) . '/notification-helper.php';
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $editing = $id > 0;
 $pageTitle = $editing ? 'Sửa sản phẩm' : 'Thêm sản phẩm';
@@ -68,6 +69,10 @@ function generate_product_code(PDO $pdo): string {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
+    $wasNewProduct = !$editing;
+    $oldSalePrice = $editing && $product['gia_khuyen_mai'] !== null
+        ? (float) $product['gia_khuyen_mai']
+        : null;
     foreach (['danh_muc_id','ten_san_pham','slug','mo_ta','chat_lieu','gia_niem_yet','gia_khuyen_mai','trang_thai'] as $key) {
         $product[$key] = $_POST[$key] ?? $product[$key];
     }
@@ -161,6 +166,45 @@ if (
             $insert = $pdo->prepare('INSERT INTO hinhanh_sanpham (san_pham_id,duong_dan,mo_ta_anh,thu_tu,anh_chinh) VALUES (?,?,?,?,0)');
             foreach ($galleryPaths as $path) $insert->execute([$id, $path, $product['ten_san_pham'], $nextOrder++]);
         }
+        // Tự động thông báo sản phẩm mới đến khách hàng khi sản phẩm được tạo và đang bán.
+        $variantCountStmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM bien_the_sanpham WHERE san_pham_id = ? AND trang_thai = 1 AND so_luong_ton > 0'
+        );
+        $variantCountStmt->execute([$id]);
+        $availableVariantCount = (int) $variantCountStmt->fetchColumn();
+
+        if ($wasNewProduct && $product['trang_thai'] === 'dang_ban' && $availableVariantCount > 0) {
+            lm_notify_all_customers(
+                $pdo,
+                'Sản phẩm mới tại La Muse',
+                'La Muse vừa giới thiệu sản phẩm ' . $product['ten_san_pham']
+                    . '. Ghé xem bộ sưu tập mới nhất của chúng tôi nhé.',
+                'marketing_new_product',
+                'chitietsanpham.php?id=' . $id
+            );
+        }
+
+        // Nếu sản phẩm đang có được áp dụng hoặc thay đổi giá khuyến mãi, gửi tin giảm giá.
+        $newSalePrice = $product['gia_khuyen_mai'] === ''
+            ? null
+            : (float) $product['gia_khuyen_mai'];
+        if (
+            !$wasNewProduct
+            && $product['trang_thai'] === 'dang_ban'
+            && $newSalePrice !== null
+            && ($oldSalePrice === null || abs($newSalePrice - $oldSalePrice) > 0.009)
+        ) {
+            lm_notify_all_customers(
+                $pdo,
+                'Ưu đãi mới dành cho bạn',
+                'Sản phẩm ' . $product['ten_san_pham']
+                    . ' hiện có giá ưu đãi ' . number_format($newSalePrice, 0, ',', '.')
+                    . 'đ. Khám phá ngay tại La Muse.',
+                'marketing_discount',
+                'chitietsanpham.php?id=' . $id
+            );
+        }
+
         flash('success', 'Đã lưu sản phẩm và cập nhật hình ảnh. Bạn có thể quản lý biến thể và tồn kho từ danh sách sản phẩm.');
         redirect('product-form.php?id=' . $id);
     } catch (Throwable $e) {
