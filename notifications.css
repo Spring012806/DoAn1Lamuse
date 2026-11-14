@@ -1,0 +1,301 @@
+
+/* =========================================
+   LA MUSE — NOTIFICATIONS
+   ========================================= */
+
+.lm-notifications-page,
+.lm-admin-notifications {
+    --lm-note-paper: #fbf8f1;
+    --lm-note-card: #fffdf8;
+    --lm-note-ink: #34382b;
+    --lm-note-muted: #858474;
+    --lm-note-olive: #697052;
+    --lm-note-line: #e6e0d4;
+
+    color: var(--lm-note-ink);
+    font-family: inherit;
+}
+
+.lm-notifications-page {
+    min-height: 65vh;
+    padding: 64px 22px 90px;
+    background: var(--lm-note-paper);
+}
+
+.lm-notifications-wrap {
+    width: min(900px, 100%);
+    margin: 0 auto;
+}
+
+.lm-notifications-heading,
+.lm-admin-notifications-heading {
+    margin-bottom: 38px;
+}
+
+.lm-notifications-eyebrow {
+    margin: 0 0 13px;
+    color: var(--lm-note-olive, #697052);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+}
+
+.lm-notifications-heading h1,
+.lm-admin-notifications-heading h1 {
+    margin: 0;
+    color: var(--lm-note-ink, #34382b);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(30px, 4vw, 43px);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+}
+
+.lm-notifications-heading > p:last-child,
+.lm-admin-notifications-heading > p:last-child {
+    margin: 12px 0 0;
+    color: var(--lm-note-muted, #858474);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.lm-notifications-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
+    margin-bottom: 8px;
+    border-top: 1px solid var(--lm-note-line, #e6e0d4);
+    border-bottom: 1px solid var(--lm-note-line, #e6e0d4);
+}
+
+.lm-notifications-toolbar > span {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+}
+
+.lm-notifications-toolbar button,
+.lm-notification-read {
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    color: var(--lm-note-olive, #697052);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.lm-notifications-toolbar button:hover,
+.lm-notification-read:hover {
+    color: #34382b;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.lm-notification-item {
+    display: flex;
+    gap: 18px;
+    padding: 25px 22px;
+    border-bottom: 1px solid var(--lm-note-line, #e6e0d4);
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+.lm-notification-item.is-unread {
+    background: rgba(105, 112, 82, 0.055);
+}
+
+.lm-notification-mark {
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--lm-note-line, #e6e0d4);
+    border-radius: 50%;
+    color: var(--lm-note-olive, #697052);
+    font-size: 19px;
+}
+
+.lm-notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.lm-notification-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lm-notification-title-row h2 {
+    margin: 0;
+    color: var(--lm-note-ink, #34382b);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.lm-notification-unread-label {
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: #e9eadf;
+    color: #5b6247;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+}
+
+.lm-notification-content > p {
+    margin: 9px 0 12px;
+    color: #68695d;
+    font-size: 13px;
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+}
+
+.lm-notification-content time {
+    display: block;
+    color: var(--lm-note-muted, #858474);
+    font-size: 11px;
+    letter-spacing: 0.025em;
+}
+
+.lm-notification-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 12px;
+}
+
+.lm-notification-open {
+    color: var(--lm-note-olive, #697052);
+    font-size: 12px;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+}
+
+.lm-notification-open:hover {
+    border-bottom-color: currentColor;
+}
+
+.lm-notifications-empty {
+    padding: 65px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--lm-note-line, #e6e0d4);
+}
+
+.lm-notifications-empty-icon {
+    display: block;
+    margin-bottom: 16px;
+    color: var(--lm-note-olive, #697052);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px;
+}
+
+.lm-notifications-empty h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+.lm-notifications-empty p {
+    margin: 12px 0 0;
+    color: var(--lm-note-muted, #858474);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+/* Admin: không ép màu nền toàn trang của bảng quản trị */
+.lm-admin-notifications {
+    padding: 28px;
+}
+
+.lm-admin-notifications .lm-notification-item {
+    padding-right: 12px;
+    padding-left: 12px;
+}
+
+/* Chuông thông báo ở header khách hàng và admin */
+.lm-notification-bell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.lm-notification-bell svg {
+    display: block;
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.lm-notification-badge {
+    position: absolute;
+    top: 1px;
+    right: 0;
+    display: none;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--lm-note-paper, #fbf8f1);
+    border-radius: 20px;
+    background: #8a4f42;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.lm-notification-badge.is-visible {
+    display: inline-flex;
+}
+
+@media (max-width: 600px) {
+    .lm-notifications-page {
+        padding: 42px 16px 65px;
+    }
+
+    .lm-notification-item {
+        gap: 12px;
+        padding: 21px 8px;
+    }
+
+    .lm-notification-mark {
+        flex-basis: 29px;
+        width: 29px;
+        height: 29px;
+    }
+
+    .lm-notification-title-row h2 {
+        font-size: 16px;
+    }
+
+    .lm-notifications-toolbar {
+        align-items: flex-start;
+    }
+
+    .lm-notifications-toolbar button {
+        max-width: 150px;
+        text-align: right;
+    }
+
+    .lm-admin-notifications {
+        padding: 18px 12px;
+    }
+}

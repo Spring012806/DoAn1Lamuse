@@ -49,6 +49,8 @@ if (is_array($lmCart)) {
   <?php if ($currentPage === "gioithieu.php"): ?>
     <link rel="stylesheet" href="gioithieu.css" />
   <?php endif; ?>
+  <link rel="stylesheet" href="notifications.css">
+<script src="notifications.js" defer></script>
 </head>
 <body class="<?= $currentPage === "gioithieu.php" ? "lm-about-page" : "" ?>">
   <div class="announcement">Une petite poésie au quotidien — Một chút thơ cho mỗi ngày</div>
@@ -78,6 +80,28 @@ if (is_array($lmCart)) {
       <a href="gioithieu.php">Về chúng tôi</a>
       <a href="#contact">Liên hệ</a>
       <button class="icon-button search-toggle" aria-label="Mở tìm kiếm"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.2 4.2"/></svg></button>
+
+      
+<?php if (!empty($lmIsLoggedIn)): ?>
+    <a
+        href="notifications.php"
+        class="lm-notification-bell"
+        id="notification-button"
+        aria-label="Thông báo"
+        title="Thông báo"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+        </svg>
+
+        <span
+            class="lm-notification-badge"
+            id="notification-count"
+        >0</span>
+    </a>
+<?php endif; ?>
+
 
 <a
     class="icon-button"

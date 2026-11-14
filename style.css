@@ -1368,3 +1368,39 @@ img {
     gap: 25px 12px;
   }
 }
+
+/* Chuông thông báo La Muse */
+.lm-notification-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.lm-notification-button svg {
+    width: 21px;
+    height: 21px;
+}
+
+.lm-notification-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #8a493f;
+    color: #fffaf0;
+    font-family: "DM Sans", sans-serif;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.lm-notification-count[hidden] {
+    display: none;
+}
