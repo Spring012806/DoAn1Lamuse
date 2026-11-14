@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/notification-helper.php';
 
 // Chỉ khách đã đăng nhập mới được đặt hàng.
 if (!lm_is_logged_in()) {
@@ -76,11 +77,22 @@ if (empty($_SESSION['lm_checkout_csrf'])) {
 
 $csrfToken = $_SESSION['lm_checkout_csrf'];
 
-$cart = $_SESSION['lm_cart'] ?? [];
+$isBuyNow = ($_SESSION['lm_checkout_mode'] ?? '') === 'buy_now';
+
+if ($isBuyNow) {
+    $buyNowItem = $_SESSION['lm_buy_now'] ?? null;
+
+    $cart = is_array($buyNowItem)
+        ? [(int) ($buyNowItem['variant_id'] ?? 0) => $buyNowItem]
+        : [];
+} else {
+    $cart = $_SESSION['lm_cart'] ?? [];
+}
 
 if (!is_array($cart)) {
     $cart = [];
 }
+
 
 $errorMessage = '';
 $successMessage = '';
@@ -189,14 +201,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
-        // Luôn đọc lại giỏ hàng từ session phía máy chủ.
-        $cart = $_SESSION['lm_cart'] ?? [];
+// Đọc đúng nguồn sản phẩm theo phương thức mua hàng.
+$isBuyNow = ($_SESSION['lm_checkout_mode'] ?? '') === 'buy_now';
 
-        if (!is_array($cart) || !$cart) {
-            throw new RuntimeException(
-                'Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi đặt hàng.'
-            );
-        }
+if ($isBuyNow) {
+    $buyNowItem = $_SESSION['lm_buy_now'] ?? null;
+
+    $cart = is_array($buyNowItem)
+        ? [(int) ($buyNowItem['variant_id'] ?? 0) => $buyNowItem]
+        : [];
+} else {
+    $cart = $_SESSION['lm_cart'] ?? [];
+}
+
+if (!is_array($cart) || !$cart) {
+    throw new RuntimeException(
+        'Không tìm thấy sản phẩm để thanh toán. Vui lòng thử lại.'
+    );
+}
 
         $pdo->beginTransaction();
 
@@ -477,11 +499,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        // Chỉ commit khi cả đơn hàng và chi tiết đều được lưu.
-        $pdo->commit();
 
-        // Xóa giỏ hàng sau khi lưu đơn hàng thành công.
-        $_SESSION['lm_cart'] = [];
+// Kiểm tra số lượng admin trước khi gửi.
+$adminCount = (int) $pdo->query("
+    SELECT COUNT(*)
+    FROM users
+    WHERE role = 'admin'
+")->fetchColumn();
+
+error_log(
+    '[La Muse notification] Bat dau tao thong bao. '
+    . 'Order ID: ' . $orderId
+    . ', Admin count: ' . $adminCount
+);
+
+lm_notify_all_admins(
+    $pdo,
+    'Có đơn hàng mới',
+    'Đơn hàng ' . $orderCode
+        . ' vừa được đặt. Tổng thanh toán: '
+        . number_format($grandTotal, 0, ',', '.') . 'đ.',
+    'new_order',
+    'orders.php?view=' . $orderId
+);
+
+// Thông báo xác nhận đặt hàng cho chính khách hàng vừa đặt đơn.
+lm_create_notification(
+    $pdo,
+    $userId,
+    'customer',
+    'Đặt hàng thành công',
+    'La Muse đã tiếp nhận đơn hàng ' . $orderCode
+        . '. Đơn hàng hiện đang chờ xác nhận. Cảm ơn bạn đã lựa chọn La Muse!',
+    'order_placed',
+    'thanhtoan.php?order=' . $orderId
+);
+
+// Xác minh thông báo đã được ghi trong giao dịch.
+$checkNotification = $pdo->prepare("
+    SELECT COUNT(*)
+    FROM thong_bao
+    WHERE nguoi_nhan_id = :admin_id
+      AND vai_tro_nhan = 'admin'
+      AND loai = 'new_order'
+      AND tieu_de = 'Có đơn hàng mới'
+      AND lien_ket = :link
+");
+
+foreach (
+    $pdo->query("
+        SELECT id
+        FROM users
+        WHERE role = 'admin'
+    ")->fetchAll(PDO::FETCH_COLUMN) as $adminId
+) {
+    $checkNotification->execute([
+        'admin_id' => (int) $adminId,
+        'link' => 'orders.php?view=' . $orderId,
+    ]);
+
+    error_log(
+        '[La Muse notification] Order ID: ' . $orderId
+        . ', Admin ID: ' . $adminId
+        . ', Notification count: '
+        . $checkNotification->fetchColumn()
+    );
+}
+
+// Chỉ commit khi đơn hàng và thông báo đều được lưu.
+$pdo->commit();
+
+// Chỉ xóa giỏ hàng thường nếu vừa thanh toán giỏ hàng thường.
+if (($_SESSION['lm_checkout_mode'] ?? '') !== 'buy_now') {
+    $_SESSION['lm_cart'] = [];
+}
+
+// Xóa dữ liệu mua ngay sau khi đơn hàng đã được lưu.
+unset($_SESSION['lm_buy_now'], $_SESSION['lm_checkout_mode']);
+
 
         // Đổi token sau thao tác đặt hàng.
         $_SESSION['lm_checkout_csrf'] = bin2hex(random_bytes(32));
@@ -590,7 +685,17 @@ if ($orderId !== false && $orderId !== null && $orderId > 0) {
 |--------------------------------------------------------------------------
 */
 
-$cart = $_SESSION['lm_cart'] ?? [];
+$isBuyNow = ($_SESSION['lm_checkout_mode'] ?? '') === 'buy_now';
+
+if ($isBuyNow) {
+    $buyNowItem = $_SESSION['lm_buy_now'] ?? null;
+
+    $cart = is_array($buyNowItem)
+        ? [(int) ($buyNowItem['variant_id'] ?? 0) => $buyNowItem]
+        : [];
+} else {
+    $cart = $_SESSION['lm_cart'] ?? [];
+}
 
 if (!is_array($cart)) {
     $cart = [];
@@ -956,13 +1061,9 @@ require_once __DIR__ . '/header.php';
                         </span>
                     </label>
 
-                    <button
-                        type="submit"
-                        class="checkout-button"
-                        <?= $totalQuantity === 0 ? 'disabled' : '' ?>
-                    >
-                        XÁC NHẬN ĐẶT HÀNG
-                    </button>
+<button type="submit" class="checkout-button">
+    XÁC NHẬN ĐẶT HÀNG
+</button>
                 </form>
             </section>
 
